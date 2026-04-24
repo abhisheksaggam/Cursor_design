@@ -1,0 +1,43 @@
+{
+  "description": "Deterministic drift overlay applied to demo-mode Figma collections so the UI preview shows meaningful changes.",
+  "overrides": {
+    "Colours": {
+      "rename": {
+        "Text/Primary Text": "Text/Main Primary"
+      },
+      "add": [
+        {
+          "id": "demo:neon-lime-500",
+          "name": "Brand/Experimental/Neon Lime - 500",
+          "description": "Experimental Figma-only token for demo drift.",
+          "type": "COLOR",
+          "valuesByMode": { "1:0": { "r": 0.85, "g": 0.95, "b": 0.15, "a": 1 } },
+          "resolvedValuesByMode": {
+            "1:0": { "resolvedValue": { "r": 0.85, "g": 0.95, "b": 0.15, "a": 1 }, "alias": null }
+          },
+          "scopes": ["ALL_SCOPES"],
+          "hiddenFromPublishing": false,
+          "codeSyntax": {}
+        }
+      ],
+      "remove": ["Brand/Blue/Blue - 50"],
+      "valueChanges": {
+        "Brand/Primary/Midnight Green/Midnight Green - 950": {
+          "1:0": { "r": 0.02, "g": 0.24, "b": 0.27, "a": 1 }
+        }
+      }
+    },
+    "Spacing": {
+      "remove": ["space-12"]
+    },
+    "Typography": {
+      "modeMismatch": {
+        "Text Styles/Size/Heading 1 - Bold": {
+          "1:1": 24,
+          "165:0": 27,
+          "165:1": 28
+        }
+      }
+    }
+  }
+}

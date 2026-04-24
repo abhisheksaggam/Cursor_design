@@ -1,0 +1,28 @@
+name: Token Drift
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  token-drift:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Generate normalized tokens
+        run: npm run normalize:tokens
+
+      - name: Generate drift report
+        run: npm run report:tokens
+
+      - name: Enforce breaking-change gate
+        run: npm run check:tokens

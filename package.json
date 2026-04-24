@@ -1,0 +1,31 @@
+{
+  "name": "design-token-consistency-system",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check:tokens": "node scripts/check-tokens.js",
+    "report:tokens": "node scripts/report-tokens.js",
+    "create:token-pr-summary": "node scripts/create-token-pr-summary.js",
+    "normalize:tokens": "node scripts/normalize-tokens.js",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@octokit/rest": "^21.0.2",
+    "next": "14.2.15",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "20.12.12",
+    "@types/react": "18.3.3",
+    "@types/react-dom": "18.3.0",
+    "autoprefixer": "10.4.20",
+    "postcss": "8.4.47",
+    "tailwindcss": "3.4.13",
+    "typescript": "5.5.4"
+  }
+}
