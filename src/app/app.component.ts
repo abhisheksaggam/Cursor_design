@@ -46,6 +46,8 @@ interface Option<T extends string> {
   styleUrl: "./app.component.css"
 })
 export class AppComponent implements OnInit {
+  readonly figmaEmbedUrl =
+    "https://www.figma.com/embed?embed_host=share&url=https%3A%2F%2Fwww.figma.com%2Fdesign%2FzFN780oP27DS6zOAhdRSU7%2FCursor%3Fnode-id%3D1-777%26t%3DaEK6Uj8Y7zhDCKsH-1";
   readonly figmaSourceFile =
     "https://www.figma.com/design/zFN780oP27DS6zOAhdRSU7/Cursor?node-id=1-777&t=JDkt7LLCh9P0uIBS-1";
   readonly tokenFilePath = "tokens/source/tokens.json";
@@ -84,7 +86,20 @@ export class AppComponent implements OnInit {
     private readonly changeDetector: ChangeDetectorRef
   ) {}
 
+  get isFigmaRoute(): boolean {
+    if (typeof window === "undefined") return false;
+    return window.location.pathname.toLowerCase().startsWith("/figma");
+  }
+
+  get isDashboardRoute(): boolean {
+    return !this.isFigmaRoute;
+  }
+
   ngOnInit() {
+    if (typeof window !== "undefined" && window.location.pathname === "/") {
+      window.history.replaceState({}, "", "/dashboard");
+    }
+    if (this.isFigmaRoute) return;
     this.loadHealth();
   }
 

@@ -43,6 +43,16 @@ p {
   gap: 1rem;
 }
 
+.nav-link {
+  color: var(--ink-soft);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.nav-link:hover {
+  color: var(--accent);
+}
+
 .primary-action {
   border: 0;
   border-radius: 0.75rem;
@@ -55,6 +65,32 @@ p {
 
 .primary-action:hover {
   filter: brightness(0.95);
+}
+
+.figma-page iframe {
+  width: 100%;
+  min-height: 82vh;
+  border: 0;
+  border-radius: 0.9rem;
+}
+
+.figma-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.9rem;
+}
+
+.figma-header h2 {
+  margin: 0.25rem 0 0;
+  color: var(--ink);
+  font-size: 1rem;
+}
+
+.figma-open-link {
+  color: var(--accent);
+  font-weight: 700;
+  text-decoration: none;
 }
 
 .live-status {
