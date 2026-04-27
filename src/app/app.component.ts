@@ -167,6 +167,38 @@ export class AppComponent implements OnInit {
     return this.health?.githubLive ?? true;
   }
 
+  private toErrorMessage(error: unknown, fallback: string): string {
+    const candidate = error as
+      | { error?: unknown; message?: string }
+      | { error?: { error?: unknown; message?: string }; message?: string }
+      | null
+      | undefined;
+    const nested = candidate && typeof candidate === "object" ? candidate.error : undefined;
+    const direct =
+      typeof candidate?.message === "string"
+        ? candidate.message
+        : typeof candidate?.error === "string"
+          ? candidate.error
+          : undefined;
+    if (direct) return direct;
+    if (nested && typeof nested === "object") {
+      const nestedObj = nested as { error?: unknown; message?: string };
+      if (typeof nestedObj.error === "string") return nestedObj.error;
+      if (typeof nestedObj.message === "string") return nestedObj.message;
+      try {
+        return JSON.stringify(nestedObj);
+      } catch {
+        return fallback;
+      }
+    }
+    if (nested && typeof nested === "string") return nested;
+    try {
+      return JSON.stringify(error) || fallback;
+    } catch {
+      return fallback;
+    }
+  }
+
   loadHealth() {
     this.healthError = null;
     this.api.fetchHealth().subscribe({
@@ -174,7 +206,7 @@ export class AppComponent implements OnInit {
         this.health = status;
       },
       error: (error) => {
-        this.healthError = error?.error?.error || error?.message || "Failed to load live status.";
+        this.healthError = this.toErrorMessage(error, "Failed to load live status.");
       }
     });
   }
@@ -203,7 +235,7 @@ export class AppComponent implements OnInit {
       error: (error) => {
         setTimeout(() => {
           this.zone.run(() => {
-            this.error = error?.error?.error || error?.message || "Failed to compare tokens.";
+            this.error = this.toErrorMessage(error, "Failed to compare tokens.");
             this.loading = false;
             this.changeDetector.detectChanges();
           });
@@ -227,7 +259,7 @@ export class AppComponent implements OnInit {
       error: (error) => {
         setTimeout(() => {
           this.zone.run(() => {
-            this.branchError = error?.error?.error || error?.message || "Failed to load branches.";
+            this.branchError = this.toErrorMessage(error, "Failed to load branches.");
             this.branchLoading = false;
           });
         }, 0);
@@ -252,7 +284,7 @@ export class AppComponent implements OnInit {
           this.submitting = false;
         },
         error: (error) => {
-          this.prError = error?.error?.error || error?.message || "Failed to create PR.";
+          this.prError = this.toErrorMessage(error, "Failed to create PR.");
           this.submitting = false;
         }
       });
