@@ -8,24 +8,40 @@
     "report:tokens": "node scripts/report-tokens.js",
     "create:token-pr-summary": "node scripts/create-token-pr-summary.js",
     "normalize:tokens": "node scripts/normalize-tokens.js",
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
+    "dev": "concurrently \"npm:dev:api\" \"npm:dev:web\"",
+    "dev:api": "tsx watch --include=.env --include=.env.local server/index.ts",
+    "dev:web": "ng serve --proxy-config proxy.conf.json",
+    "build": "ng build && tsc -p tsconfig.server.json",
+    "build:web": "ng build",
+    "build:api": "tsc -p tsconfig.server.json",
+    "start": "tsx server/index.ts"
   },
   "dependencies": {
+    "@angular/animations": "^21.2.10",
+    "@angular/cdk": "^21.2.8",
+    "@angular/common": "^21.2.10",
+    "@angular/compiler": "^21.2.10",
+    "@angular/core": "^21.2.10",
+    "@angular/forms": "^21.2.10",
+    "@angular/platform-browser": "^21.2.10",
+    "@angular/router": "^21.2.10",
     "@octokit/rest": "^21.0.2",
-    "next": "14.2.15",
-    "react": "18.3.1",
-    "react-dom": "18.3.1"
+    "@primeuix/themes": "^2.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "primeng": "^21.1.6",
+    "zone.js": "^0.16.1"
   },
   "devDependencies": {
+    "@angular-devkit/build-angular": "^21.2.8",
+    "@angular/cli": "^21.2.8",
+    "@angular/compiler-cli": "^21.2.10",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
     "@types/node": "20.12.12",
-    "@types/react": "18.3.3",
-    "@types/react-dom": "18.3.0",
-    "autoprefixer": "10.4.20",
-    "postcss": "8.4.47",
-    "tailwindcss": "3.4.13",
-    "typescript": "5.5.4"
+    "concurrently": "^9.2.1",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.0"
   }
 }

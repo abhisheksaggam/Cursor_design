@@ -1,23 +1,15 @@
-import { readFile } from "node:fs/promises";
-import path from "node:path";
-import { loadEnvConfig } from "@/lib/config";
-import type { NormalizedTokenDocument } from "@/lib/types";
-
-async function loadLocalSource(): Promise<NormalizedTokenDocument> {
-  const p = path.join(process.cwd(), "tokens/source/tokens.json");
-  const raw = await readFile(p, "utf8");
-  return JSON.parse(raw) as NormalizedTokenDocument;
-}
+import { loadEnvConfig } from "../config";
+import type { NormalizedTokenDocument } from "../../shared/types";
 
 export async function fetchGithubTokens(): Promise<{
-  demoMode: boolean;
   document: NormalizedTokenDocument;
   sha?: string;
 }> {
   const env = loadEnvConfig();
-  if (env.demoMode || !env.githubToken || !env.githubOwner || !env.githubRepo) {
-    const document = await loadLocalSource();
-    return { demoMode: true, document };
+  if (!env.githubLive || !env.githubToken || !env.githubOwner || !env.githubRepo) {
+    throw new Error(
+      `GitHub live mode requires GITHUB_TOKEN, GITHUB_OWNER, and GITHUB_REPO. Missing: ${env.missing.join(", ")}`
+    );
   }
 
   const url = `https://api.github.com/repos/${env.githubOwner}/${env.githubRepo}/contents/${encodeURIComponent(
@@ -36,5 +28,5 @@ export async function fetchGithubTokens(): Promise<{
   const data = (await response.json()) as { content: string; encoding: string; sha: string };
   const decoded = Buffer.from(data.content, data.encoding as BufferEncoding).toString("utf8");
   const document = JSON.parse(decoded) as NormalizedTokenDocument;
-  return { demoMode: false, document, sha: data.sha };
+  return { document, sha: data.sha };
 }

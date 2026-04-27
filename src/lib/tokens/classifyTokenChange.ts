@@ -1,4 +1,4 @@
-import type { ChangeType, RiskLevel } from "@/lib/types";
+import type { ChangeType, RiskLevel } from "../../shared/types";
 
 export function classifyRisk(changeType: ChangeType): RiskLevel {
   switch (changeType) {

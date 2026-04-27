@@ -2,7 +2,9 @@
 
 ## Input Interpretation
 
-The system ingests exactly three Figma variable exports:
+The application uses an Angular v21 + PrimeNG frontend backed by a standalone Node/Express API.
+The API can read live Figma variables in configured environments, or demo fixtures when credentials
+are missing. The fixture pipeline still ingests three Figma variable exports:
 
 - `Colours.json` - color primitives and semantic text/icon colors
 - `Spacing.json` - spacing scale values (`space-*`)
@@ -64,6 +66,16 @@ Resolution decisions:
 - **GitHub**: canonical token state in `tokens/source/tokens.json`
 - **Figma**: external input from variable exports
 - Drift is computed as `source` vs `figma` and surfaced as markdown reports.
+
+## Runtime Flow
+
+```mermaid
+flowchart LR
+  AngularApp["Angular PrimeNG App"] --> NodeApi["Node Express API"]
+  NodeApi --> FigmaVariables["Figma Variables"]
+  NodeApi --> GithubTokens["GitHub Token File"]
+  NodeApi --> TokenCompare["Token Compare Logic"]
+```
 
 ## Drift Detection
 

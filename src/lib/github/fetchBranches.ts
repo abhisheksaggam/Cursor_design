@@ -1,4 +1,4 @@
-import { loadEnvConfig } from "@/lib/config";
+import { loadEnvConfig } from "../config";
 
 export interface BranchInfo {
   name: string;
@@ -6,16 +6,12 @@ export interface BranchInfo {
   sha: string;
 }
 
-const FIXTURE_BRANCHES: BranchInfo[] = [
-  { name: "main", protected: true, sha: "fixture-main-sha" },
-  { name: "develop", protected: false, sha: "fixture-develop-sha" },
-  { name: "design-tokens/staging", protected: false, sha: "fixture-staging-sha" }
-];
-
-export async function fetchBranches(): Promise<{ demoMode: boolean; branches: BranchInfo[] }> {
+export async function fetchBranches(): Promise<{ branches: BranchInfo[] }> {
   const env = loadEnvConfig();
-  if (env.demoMode || !env.githubToken || !env.githubOwner || !env.githubRepo) {
-    return { demoMode: true, branches: FIXTURE_BRANCHES };
+  if (!env.githubLive || !env.githubToken || !env.githubOwner || !env.githubRepo) {
+    throw new Error(
+      `GitHub live mode requires GITHUB_TOKEN, GITHUB_OWNER, and GITHUB_REPO. Missing: ${env.missing.join(", ")}`
+    );
   }
 
   const url = `https://api.github.com/repos/${env.githubOwner}/${env.githubRepo}/branches?per_page=100`;
@@ -36,7 +32,6 @@ export async function fetchBranches(): Promise<{ demoMode: boolean; branches: Br
   }>;
 
   return {
-    demoMode: false,
     branches: data.map((branch) => ({
       name: branch.name,
       protected: branch.protected,

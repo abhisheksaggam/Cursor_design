@@ -1,0 +1,220 @@
+<main class="app-shell">
+  <header class="dashboard-header">
+    <div>
+      <div class="eyebrow">Figma proposal review</div>
+      <h1>Design token update dashboard</h1>
+    </div>
+    <div class="header-actions">
+      <button class="primary-action" type="button" (click)="runCheck()">Check updates</button>
+    </div>
+  </header>
+
+  <section class="live-status">
+    <p-card styleClass="status-card">
+      <div class="status-header">
+        <div>
+          <div class="card-eyebrow">Connection status</div>
+          <h2>Live sync health</h2>
+        </div>
+        <p-tag [value]="figmaLive ? 'Figma live' : 'Figma fallback'" [severity]="figmaLive ? 'success' : 'warn'" />
+      </div>
+      <div class="status-grid">
+        <div class="status-item">
+          <span>Figma variables</span>
+          <p-tag [value]="figmaLive ? 'Live API' : 'Fixture mode'" [severity]="figmaLive ? 'success' : 'warn'" />
+        </div>
+        <div class="status-item">
+          <span>GitHub tokens / PR</span>
+          <p-tag [value]="githubLive ? 'Live API' : 'Local fallback'" [severity]="githubLive ? 'success' : 'warn'" />
+        </div>
+      </div>
+      <p *ngIf="healthError" class="small-muted">{{ healthError }}</p>
+    </p-card>
+  </section>
+
+  <section class="metric-grid">
+    <p-card styleClass="metric-card">
+      <div class="card-eyebrow">Overall risk</div>
+      <strong>{{ overallRisk }}</strong>
+    </p-card>
+    <p-card styleClass="metric-card">
+      <div class="card-eyebrow">Safe</div>
+      <strong>{{ totals.safe }}</strong>
+    </p-card>
+    <p-card styleClass="metric-card">
+      <div class="card-eyebrow">Review needed</div>
+      <strong>{{ totals.reviewNeeded }}</strong>
+    </p-card>
+    <p-card styleClass="metric-card">
+      <div class="card-eyebrow">Breaking</div>
+      <strong>{{ totals.breaking }}</strong>
+    </p-card>
+  </section>
+
+  <section class="impact-grid">
+    <p-card styleClass="impact-card">
+      <div class="card-eyebrow">Designer impact</div>
+      <p>{{ designerImpact }}</p>
+    </p-card>
+    <p-card styleClass="impact-card">
+      <div class="card-eyebrow">Developer impact</div>
+      <p>{{ developerImpact }}</p>
+    </p-card>
+  </section>
+
+  <div *ngIf="error" class="message danger">{{ error }}</div>
+  <section class="diff-section">
+    <div class="filters">
+      <div class="segmented">
+        <button
+          *ngFor="let filter of riskOptions"
+          type="button"
+          [class.active]="riskFilter === filter.value"
+          (click)="riskFilter = filter.value"
+        >
+          {{ filter.label }}
+        </button>
+      </div>
+      <span class="checked-time">
+        {{ checkedAt ? ('Checked ' + (checkedAt | date: 'dd/MM/yyyy, HH:mm:ss')) : 'Not checked yet' }}
+      </span>
+    </div>
+
+    <p-card styleClass="table-card">
+      <div class="table-card-header">
+        <div>
+          <div class="card-eyebrow">Token diff preview</div>
+          <h2>Figma proposals compared with GitHub tokens</h2>
+        </div>
+        <span class="count-pill">{{ filteredChanges.length }} changes</span>
+      </div>
+    <table class="token-table">
+      <thead>
+        <tr>
+          <th>Token name</th>
+          <th>Type</th>
+          <th>Mode</th>
+          <th>GitHub value</th>
+          <th>Figma value</th>
+          <th>Change type</th>
+          <th>Risk</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <ng-container *ngFor="let change of filteredChanges">
+          <tr class="change-row">
+            <td>
+              <button class="token-button" type="button" (click)="toggleDetails(change)">
+                <strong>{{ prettyTokenName(change.token) }}</strong>
+                <span>{{ change.token }}</span>
+              </button>
+            </td>
+            <td>{{ groupLabel(change.group) }}</td>
+            <td>{{ change.affectedMode || '-' }}</td>
+            <td>
+              <span class="value-chip compact">
+                <i *ngIf="isRgba(change.githubValue)" [ngStyle]="valueStyle(change.githubValue)"></i>
+                {{ formatValue(change.githubValue ?? null, change.group) }}
+              </span>
+            </td>
+            <td>
+              <span class="value-chip compact proposed">
+                <i *ngIf="isRgba(change.figmaValue)" [ngStyle]="valueStyle(change.figmaValue)"></i>
+                {{ formatValue(change.figmaValue ?? null, change.group) }}
+              </span>
+            </td>
+            <td>{{ changeTypeLabel(change.type) }}</td>
+            <td><p-tag [value]="riskLabel(change.risk)" [severity]="riskSeverity(change.risk)" /></td>
+            <td>{{ change.note }}</td>
+          </tr>
+          <tr *ngIf="isExpanded(change)" class="detail-row">
+            <td colspan="8">
+              <div class="detail-grid">
+                <div>
+                  <div class="card-eyebrow">Designer context</div>
+                  <p>{{ change.designerExplanation }}</p>
+                </div>
+                <div>
+                  <div class="card-eyebrow">Developer context</div>
+                  <p>{{ change.developerExplanation }}</p>
+                </div>
+              </div>
+            </td>
+          </tr>
+        </ng-container>
+        <tr *ngIf="filteredChanges.length === 0">
+          <td colspan="8" class="empty-table">No token preview yet.</td>
+        </tr>
+      </tbody>
+    </table>
+    </p-card>
+  </section>
+
+  <p-card styleClass="approval-card">
+    <ng-template #header>
+      <div class="section-header">
+        <div>
+          <div class="card-eyebrow">Repo owner review</div>
+          <h2>Push approved token proposal to GitHub</h2>
+        </div>
+        <p-button label="Push to GitHub" icon="pi pi-github" severity="secondary" [outlined]="true" />
+      </div>
+    </ng-template>
+
+    <div class="approval-grid">
+      <div>
+        <label class="field-label">Target branch</label>
+        <div *ngIf="branchError" class="message danger">{{ branchError }}</div>
+        <p-select
+          *ngIf="!branchError"
+          [options]="branchOptions"
+          [(ngModel)]="selectedBranch"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Load branches first"
+          styleClass="full-width"
+        />
+        <p class="small-muted">Live mode is enabled. PR creation writes directly to GitHub.</p>
+      </div>
+
+      <div class="ack-list">
+        <label class="field-label">Pre-merge acknowledgments</label>
+        <label class="ack">
+          <p-checkbox [(ngModel)]="acknowledgments.designIntent" [binary]="true" />
+          <span><strong>Design intent confirmed</strong> Designer reviewed the preview values.</span>
+        </label>
+        <label class="ack">
+          <p-checkbox
+            [(ngModel)]="acknowledgments.breakingReviewed"
+            [binary]="true"
+            [disabled]="totals.breaking === 0"
+          />
+          <span><strong>{{ totals.breaking === 0 ? 'No breaking changes' : 'Breaking changes reviewed' }}</strong> Owner validated naming and deprecations.</span>
+        </label>
+        <label class="ack">
+          <p-checkbox [(ngModel)]="acknowledgments.policyConfirmed" [binary]="true" />
+          <span><strong>Figma source is approved</strong> This workspace accepts only the approved final design file.</span>
+        </label>
+      </div>
+    </div>
+
+    <footer class="approval-footer">
+      <span>{{ !preview ? 'Run check updates to enable PR action.' : 'You can edit the PR body in GitHub after creation.' }}</span>
+      <p-button
+        [label]="submitting ? 'Opening PR...' : 'Approve and open PR'"
+        severity="success"
+        [loading]="submitting"
+        [disabled]="!preview || !selectedBranch || !allAcked || submitting"
+        (onClick)="createPr()"
+      />
+    </footer>
+
+    <div *ngIf="prError" class="message danger">{{ prError }}</div>
+    <div *ngIf="prResult" class="message success">
+      <strong>PR prepared.</strong>
+      Branch: {{ prResult.newBranch }}
+      <a [href]="prResult.prUrl" target="_blank" rel="noopener noreferrer">Open PR</a>
+    </div>
+  </p-card>
+</main>

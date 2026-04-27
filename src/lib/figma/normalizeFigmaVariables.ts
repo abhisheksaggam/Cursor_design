@@ -1,11 +1,11 @@
-import type { FigmaVariableCollection } from "@/lib/figma/fetchFigmaVariables";
+import type { FigmaVariableCollection } from "./fetchFigmaVariables";
 import type {
   NormalizedToken,
   NormalizedTokenDocument,
   TokenGroup,
   TokenValue
-} from "@/lib/types";
-import { ALLOWED_FIGMA_SOURCE_FILE } from "@/lib/config";
+} from "../../shared/types";
+import { ALLOWED_FIGMA_SOURCE_FILE } from "../config";
 
 const TYPE_TO_GROUP: Record<string, TokenGroup> = {
   COLOR: "color",

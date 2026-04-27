@@ -5,8 +5,8 @@ import type {
   TokenChange,
   TokenGroup,
   TokenValue
-} from "@/lib/types";
-import { classifyRisk, explanations } from "@/lib/tokens/classifyTokenChange";
+} from "../../shared/types";
+import { classifyRisk, explanations } from "./classifyTokenChange";
 
 function flatten(doc: NormalizedTokenDocument): Record<string, NormalizedToken> {
   const flat: Record<string, NormalizedToken> = {};

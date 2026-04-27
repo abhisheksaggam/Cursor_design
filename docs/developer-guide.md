@@ -2,10 +2,26 @@
 
 ## Pipeline Overview
 
+- `src/app` - Angular v21 + PrimeNG frontend
+- `server` - Node/Express API for Figma, GitHub, token comparison, and PR creation
+- `src/shared` - shared TypeScript contracts for API payloads
 - `src/normalize` - converts raw variable collections into canonical token JSON
 - `src/compare` - computes drift between source tokens and Figma export
 - `src/reports` - creates markdown drift report and PR summary
 - `src/sync` - orchestrates loading, writing, and report generation
+
+## Local App Development
+
+Run both the API and frontend:
+
+`npm run dev`
+
+Run pieces independently:
+
+- `npm run dev:api` - Express API at `http://localhost:4000`
+- `npm run dev:web` - Angular app at `http://localhost:4200`
+
+The Angular dev server proxies `/api/*` calls to the Node API using `proxy.conf.json`.
 
 ## Token Generation
 

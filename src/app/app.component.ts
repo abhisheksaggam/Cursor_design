@@ -1,0 +1,343 @@
+import { CommonModule } from "@angular/common";
+import { ChangeDetectorRef, Component, NgZone, OnInit } from "@angular/core";
+import { FormsModule } from "@angular/forms";
+import { ButtonModule } from "primeng/button";
+import { CardModule } from "primeng/card";
+import { CheckboxModule } from "primeng/checkbox";
+import { ProgressSpinnerModule } from "primeng/progressspinner";
+import { SelectModule } from "primeng/select";
+import { TableModule } from "primeng/table";
+import { TagModule } from "primeng/tag";
+import { TokenApiService } from "./token-api.service";
+import type {
+  BranchInfo,
+  ChangeType,
+  ComparePreview,
+  CreateTokenPrResult,
+  HealthStatus,
+  RiskLevel,
+  TokenChange,
+  TokenGroup,
+  TokenValue
+} from "../shared/types";
+
+type FilterValue = "all" | RiskLevel;
+type GroupFilter = "all" | TokenGroup;
+
+interface Option<T extends string> {
+  label: string;
+  value: T;
+}
+
+@Component({
+  selector: "app-root",
+  imports: [
+    CommonModule,
+    FormsModule,
+    ButtonModule,
+    CardModule,
+    CheckboxModule,
+    ProgressSpinnerModule,
+    SelectModule,
+    TableModule,
+    TagModule
+  ],
+  templateUrl: "./app.component.html",
+  styleUrl: "./app.component.css"
+})
+export class AppComponent implements OnInit {
+  readonly figmaSourceFile =
+    "https://www.figma.com/design/zFN780oP27DS6zOAhdRSU7/Cursor?node-id=1-777&t=JDkt7LLCh9P0uIBS-1";
+  readonly tokenFilePath = "tokens/source/tokens.json";
+  readonly riskOptions: Option<FilterValue>[] = [
+    { label: "All", value: "all" },
+    { label: "Breaking", value: "breaking" },
+    { label: "Review", value: "review-needed" },
+    { label: "Safe", value: "safe" }
+  ];
+
+  preview: ComparePreview | null = null;
+  checkedAt: Date | null = null;
+  loading = false;
+  error: string | null = null;
+  riskFilter: FilterValue = "all";
+  groupFilter: GroupFilter = "all";
+  selectedBranch: string | null = null;
+  branches: BranchInfo[] = [];
+  branchLoading = false;
+  branchError: string | null = null;
+  health: HealthStatus | null = null;
+  healthError: string | null = null;
+  submitting = false;
+  prResult: CreateTokenPrResult | null = null;
+  prError: string | null = null;
+  expandedRows: Record<string, boolean> = {};
+  acknowledgments = {
+    designIntent: false,
+    breakingReviewed: true,
+    policyConfirmed: true
+  };
+
+  constructor(
+    private readonly api: TokenApiService,
+    private readonly zone: NgZone,
+    private readonly changeDetector: ChangeDetectorRef
+  ) {}
+
+  ngOnInit() {
+    this.loadHealth();
+  }
+
+  get groupOptions(): Option<GroupFilter>[] {
+    const groups = new Set<TokenGroup>();
+    this.preview?.changes.forEach((change) => groups.add(change.group));
+    return [
+      { label: "All areas", value: "all" },
+      ...Array.from(groups).map((group) => ({ label: this.groupLabel(group), value: group }))
+    ];
+  }
+
+  get branchOptions(): Option<string>[] {
+    return this.branches.map((branch) => ({
+      label: `${branch.name}${branch.protected ? " (protected)" : ""}`,
+      value: branch.name
+    }));
+  }
+
+  get filteredChanges(): TokenChange[] {
+    return (this.preview?.changes || []).filter((change) => {
+      const riskOk = this.riskFilter === "all" || change.risk === this.riskFilter;
+      const groupOk = this.groupFilter === "all" || change.group === this.groupFilter;
+      return riskOk && groupOk;
+    });
+  }
+
+  get totals() {
+    return (
+      this.preview?.totals || {
+        total: 0,
+        safe: 0,
+        reviewNeeded: 0,
+        breaking: 0
+      }
+    );
+  }
+
+  get overallRisk(): string {
+    if (this.totals.breaking > 0) return "breaking";
+    if (this.totals.reviewNeeded > 0) return "review";
+    return "safe";
+  }
+
+  get designerImpact(): string {
+    if (!this.preview || this.totals.total === 0) return "No visible design changes were found.";
+    if (this.totals.breaking > 0) return "Breaking token changes need design-system owner review.";
+    if (this.totals.reviewNeeded > 0) return "Some visual values changed and need design intent confirmation.";
+    return "Only safe additive or metadata token changes were found.";
+  }
+
+  get developerImpact(): string {
+    if (!this.preview || this.totals.total === 0) return "No token file changes are required.";
+    if (this.totals.breaking > 0) return "Token updates may affect consuming code and should be reviewed before merge.";
+    if (this.totals.reviewNeeded > 0) return "Token source can be updated after engineering review.";
+    return "Proposed token file changes are low risk.";
+  }
+
+  get headline(): string {
+    const totals = this.preview?.totals;
+    if (!totals || totals.total === 0) return "No token drift detected. Design and code are aligned.";
+    if (totals.breaking > 0) {
+      return `${totals.breaking} breaking change${totals.breaking === 1 ? "" : "s"} need owner approval before merge.`;
+    }
+    if (totals.reviewNeeded > 0) {
+      return `${totals.reviewNeeded} change${totals.reviewNeeded === 1 ? "" : "s"} should be reviewed before approval.`;
+    }
+    return `${totals.safe} safe update${totals.safe === 1 ? "" : "s"} ready for a quick sanity check.`;
+  }
+
+  get allAcked(): boolean {
+    return Object.values(this.acknowledgments).every(Boolean);
+  }
+
+  get figmaLive(): boolean {
+    return this.health?.figmaLive ?? true;
+  }
+
+  get githubLive(): boolean {
+    return this.health?.githubLive ?? true;
+  }
+
+  loadHealth() {
+    this.healthError = null;
+    this.api.fetchHealth().subscribe({
+      next: (status) => {
+        this.health = status;
+      },
+      error: (error) => {
+        this.healthError = error?.error?.error || error?.message || "Failed to load live status.";
+      }
+    });
+  }
+
+  runCheck() {
+    this.loading = true;
+    this.error = null;
+    this.prResult = null;
+    this.api.compareTokens().subscribe({
+      next: (preview) => {
+        setTimeout(() => {
+          this.zone.run(() => {
+            this.preview = preview;
+            this.checkedAt = new Date();
+            this.acknowledgments = {
+              designIntent: false,
+              breakingReviewed: preview.totals.breaking === 0,
+              policyConfirmed: true
+            };
+            this.loadHealth();
+            this.loading = false;
+            this.changeDetector.detectChanges();
+          });
+        }, 250);
+      },
+      error: (error) => {
+        setTimeout(() => {
+          this.zone.run(() => {
+            this.error = error?.error?.error || error?.message || "Failed to compare tokens.";
+            this.loading = false;
+            this.changeDetector.detectChanges();
+          });
+        }, 250);
+      }
+    });
+  }
+
+  loadBranches() {
+    this.branchLoading = true;
+    this.branchError = null;
+    this.api.fetchBranches().subscribe({
+      next: (result) => {
+        setTimeout(() => {
+          this.zone.run(() => {
+            this.branches = result.branches || [];
+            this.branchLoading = false;
+          });
+        }, 0);
+      },
+      error: (error) => {
+        setTimeout(() => {
+          this.zone.run(() => {
+            this.branchError = error?.error?.error || error?.message || "Failed to load branches.";
+            this.branchLoading = false;
+          });
+        }, 0);
+      }
+    });
+  }
+
+  createPr() {
+    if (!this.preview || !this.selectedBranch) return;
+    this.submitting = true;
+    this.prError = null;
+    this.api
+      .createPr({
+        baseBranch: this.selectedBranch,
+        preview: this.preview,
+        updatedDocument: this.preview.proposedSource,
+        prTitle: "chore(tokens): sync tokens from Figma"
+      })
+      .subscribe({
+        next: (result) => {
+          this.prResult = result;
+          this.submitting = false;
+        },
+        error: (error) => {
+          this.prError = error?.error?.error || error?.message || "Failed to create PR.";
+          this.submitting = false;
+        }
+      });
+  }
+
+  changeKey(change: TokenChange): string {
+    return `${change.token}-${change.type}-${change.affectedMode || ""}`;
+  }
+
+  toggleDetails(change: TokenChange) {
+    const key = this.changeKey(change);
+    this.expandedRows[key] = !this.expandedRows[key];
+  }
+
+  isExpanded(change: TokenChange): boolean {
+    return !!this.expandedRows[this.changeKey(change)];
+  }
+
+  groupLabel(group: TokenGroup): string {
+    return {
+      color: "Color",
+      spacing: "Spacing",
+      typography: "Typography",
+      radius: "Radius",
+      shadow: "Shadow"
+    }[group];
+  }
+
+  riskSeverity(risk: RiskLevel): "success" | "warn" | "danger" {
+    if (risk === "breaking") return "danger";
+    if (risk === "review-needed") return "warn";
+    return "success";
+  }
+
+  riskLabel(risk: RiskLevel): string {
+    return risk === "review-needed" ? "Review" : risk === "breaking" ? "Breaking" : "Safe";
+  }
+
+  changeTypeLabel(changeType: ChangeType): string {
+    const labels: Record<ChangeType, string> = {
+      added: "New",
+      removed: "Removed",
+      "value-change": "Updated",
+      "alias-change": "Link changed",
+      "mode-change": "Responsive values changed",
+      "description-change": "Description updated",
+      "type-change": "Type changed",
+      "rename-candidate": "Renamed",
+      "missing-mode": "Breakpoint missing"
+    };
+    return labels[changeType];
+  }
+
+  prettyTokenName(token: string): string {
+    const parts = token.split(".");
+    return parts.length <= 1 ? token : parts.slice(1).join(" / ").replace(/-/g, " ");
+  }
+
+  formatValue(value: TokenValue, group?: TokenGroup): string {
+    if (value === null || value === undefined) return "-";
+    if (this.isRgba(value)) return this.rgbaToHex(value);
+    if (typeof value === "number") return group === "spacing" || group === "typography" ? `${value}px` : `${value}`;
+    if (typeof value === "string") return value;
+    return JSON.stringify(value);
+  }
+
+  valueStyle(value: TokenValue): Record<string, string> {
+    return this.isRgba(value) ? { backgroundColor: this.rgbaToCss(value) } : {};
+  }
+
+  isRgba(value: unknown): value is { r: number; g: number; b: number; a?: number } {
+    const candidate = value as Record<string, unknown> | null;
+    return !!candidate && typeof candidate.r === "number" && typeof candidate.g === "number" && typeof candidate.b === "number";
+  }
+
+  private rgbaToHex(value: { r: number; g: number; b: number }): string {
+    const channel = (number: number) =>
+      Math.round(Math.max(0, Math.min(1, number)) * 255)
+        .toString(16)
+        .padStart(2, "0");
+    return `#${channel(value.r)}${channel(value.g)}${channel(value.b)}`.toUpperCase();
+  }
+
+  private rgbaToCss(value: { r: number; g: number; b: number; a?: number }): string {
+    const channel = (number: number) => Math.round(Math.max(0, Math.min(1, number)) * 255);
+    return `rgba(${channel(value.r)}, ${channel(value.g)}, ${channel(value.b)}, ${value.a ?? 1})`;
+  }
+}

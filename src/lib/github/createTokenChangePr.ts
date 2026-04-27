@@ -1,6 +1,6 @@
 import { Octokit } from "@octokit/rest";
-import { loadEnvConfig } from "@/lib/config";
-import type { ComparePreview, NormalizedTokenDocument } from "@/lib/types";
+import { loadEnvConfig } from "../config";
+import type { ComparePreview, NormalizedTokenDocument } from "../../shared/types";
 
 export interface CreateTokenPrInput {
   baseBranch: string;
@@ -10,7 +10,6 @@ export interface CreateTokenPrInput {
 }
 
 export interface CreateTokenPrResult {
-  demoMode: boolean;
   prUrl: string;
   newBranch: string;
   commitSha?: string;
@@ -59,12 +58,10 @@ export async function createTokenChangePr(input: CreateTokenPrInput): Promise<Cr
   const env = loadEnvConfig();
   const newBranchName = `token-sync/${new Date().toISOString().replace(/[:.]/g, "-")}`;
 
-  if (env.demoMode || !env.githubToken || !env.githubOwner || !env.githubRepo) {
-    return {
-      demoMode: true,
-      prUrl: "#demo-mode-no-real-pr",
-      newBranch: newBranchName
-    };
+  if (!env.githubToken || !env.githubOwner || !env.githubRepo) {
+    throw new Error(
+      `GitHub live mode requires GITHUB_TOKEN, GITHUB_OWNER, and GITHUB_REPO. Missing: ${env.missing.join(", ")}`
+    );
   }
 
   const octokit = new Octokit({ auth: env.githubToken });
@@ -121,7 +118,6 @@ export async function createTokenChangePr(input: CreateTokenPrInput): Promise<Cr
   });
 
   return {
-    demoMode: false,
     prUrl: pr.data.html_url,
     newBranch: newBranchName,
     commitSha: commit.data.commit.sha || undefined

@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { ALLOWED_FIGMA_SOURCE_FILE, loadEnvConfig } from "@/lib/config";
+import { ALLOWED_FIGMA_SOURCE_FILE, loadEnvConfig } from "../config";
+import type { NormalizedTokenDocument, TokenGroup, TokenValue } from "../../shared/types";
 
 export interface FigmaVariableCollection {
   id: string;
@@ -19,7 +20,6 @@ export interface FigmaVariable {
 }
 
 export interface FigmaVariablesResponse {
-  demoMode: boolean;
   figmaSourceFile: string;
   collections: FigmaVariableCollection[];
 }
@@ -37,8 +37,29 @@ interface DemoDriftOverrides {
   >;
 }
 
+async function loadBridgeCollections(): Promise<FigmaVariableCollection[] | null> {
+  const root = process.cwd();
+  try {
+    const raw = await readFile(path.join(root, "fixtures/figma/bridge-collections.json"), "utf8");
+    const parsed = JSON.parse(raw) as { collections?: FigmaVariableCollection[] };
+    return Array.isArray(parsed.collections) && parsed.collections.length > 0 ? parsed.collections : null;
+  } catch {
+    return null;
+  }
+}
+
 async function loadFixtureCollections(): Promise<FigmaVariableCollection[]> {
   const root = process.cwd();
+  const bridge = await loadBridgeCollections();
+  if (bridge) return bridge;
+  try {
+    const normalizedRaw = await readFile(path.join(root, "fixtures/figma/variables-export.json"), "utf8");
+    const normalized = JSON.parse(normalizedRaw) as NormalizedTokenDocument;
+    return normalizedDocumentToCollections(normalized);
+  } catch {
+    // Fall through to the legacy collection fixtures if a normalized fixture is unavailable.
+  }
+
   const files = ["Colours.json", "Spacing.json", "Typography.json"];
   const collections: FigmaVariableCollection[] = [];
   for (const file of files) {
@@ -104,20 +125,60 @@ async function loadFixtureCollections(): Promise<FigmaVariableCollection[]> {
   return collections;
 }
 
+function normalizedDocumentToCollections(document: NormalizedTokenDocument): FigmaVariableCollection[] {
+  const typeByGroup: Record<TokenGroup, string> = {
+    color: "COLOR",
+    spacing: "FLOAT",
+    typography: "STRING",
+    radius: "FLOAT",
+    shadow: "STRING"
+  };
+
+  return (Object.entries(document.tokens || {}) as Array<
+    [TokenGroup, NormalizedTokenDocument["tokens"][TokenGroup]]
+  >).map(([group, tokens]) => ({
+    id: `fixture:${group}`,
+    name: group[0].toUpperCase() + group.slice(1),
+    modes: { value: "Value" },
+    variables: Object.values(tokens || {}).map((token) => {
+      const value = token.value as TokenValue;
+      return {
+        id: token.figmaVariableId || `fixture:${token.name}`,
+        name: token.name.replace(`${group}.`, "").replace(/\./g, "/"),
+        description: token.description,
+        type: token.type || typeByGroup[group],
+        valuesByMode: { value },
+        resolvedValuesByMode: { value: { resolvedValue: value, alias: token.aliasOf || null } }
+      };
+    })
+  }));
+}
+
 export async function fetchFigmaVariables(): Promise<FigmaVariablesResponse> {
   const env = loadEnvConfig();
-  if (env.demoMode || !env.figmaAccessToken || !env.figmaFileKey) {
-    const collections = await loadFixtureCollections();
+
+  const bridge = await loadBridgeCollections();
+  if (bridge) {
     return {
-      demoMode: true,
       figmaSourceFile: ALLOWED_FIGMA_SOURCE_FILE,
-      collections
+      collections: bridge
     };
   }
 
-  const url = `https://api.figma.com/v1/files/${env.figmaFileKey}/variables/local`;
+  if (!env.figmaLive || !env.figmaAccessToken || !env.figmaFileKey) {
+    throw new Error(
+      `Figma live mode requires FIGMA_ACCESS_TOKEN and FIGMA_FILE_KEY or active Desktop Bridge data. Missing: ${env.missing.join(", ")}`
+    );
+  }
+
+  const url = `https://api.figma.com/v1/files/${env.figmaFileKey}/variables/local?refresh=${Date.now()}`;
   const response = await fetch(url, {
-    headers: { "X-Figma-Token": env.figmaAccessToken }
+    cache: "no-store",
+    headers: {
+      "X-Figma-Token": env.figmaAccessToken,
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+      Pragma: "no-cache"
+    }
   });
   if (!response.ok) {
     throw new Error(`Figma API error ${response.status}: ${await response.text()}`);
@@ -157,7 +218,6 @@ export async function fetchFigmaVariables(): Promise<FigmaVariablesResponse> {
   });
 
   return {
-    demoMode: false,
     figmaSourceFile: ALLOWED_FIGMA_SOURCE_FILE,
     collections
   };

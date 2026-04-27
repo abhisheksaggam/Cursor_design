@@ -1,6 +1,6 @@
 # Design Token Consistency System
 
-A design-token consistency workflow plus a small web app where designers can
+ A design-token consistency workflow plus an Angular + PrimeNG web app where designers can
 trigger checks between **Figma Variables** and **GitHub design tokens**, and
 repo owners can review and open PRs with proposed updates.
 
@@ -10,8 +10,9 @@ repo owners can review and open PRs with proposed updates.
 
 ## What is inside
 
-- `src/app/` - Next.js App Router UI and API routes
-- `src/components/` - UI components (diff preview, branch selector, approval panel, etc.)
+- `src/app/` - Angular v21 + PrimeNG frontend
+- `server/` - standalone Node/Express API routes
+- `src/shared/` - shared frontend/backend API contracts
 - `src/lib/figma/` - Figma variables fetch + normalization
 - `src/lib/github/` - GitHub tokens fetch, branches, PR creation
 - `src/lib/tokens/` - compare, classify, generate preview
@@ -47,14 +48,22 @@ If any are missing, the app boots in **Demo mode**:
 - Branches load from a fixture list.
 - PR creation is disabled and returns a demo response.
 
+### Secure local setup
+
+- Keep secrets in `.env.local` (already ignored by git).
+- Use `.env.example` as the safe template.
+- Values from `.env.local` are auto-loaded by the API and shared config module.
+
 ## Commands
 
 - `npm run normalize:tokens` - merge/normalize the three input exports.
 - `npm run report:tokens` - generate drift and PR summary markdown reports.
 - `npm run check:tokens` - fail if breaking drift is detected (CI gate).
 - `npm run create:token-pr-summary` - regenerate PR summary output.
-- `npm run dev` - start web app (Next.js). May need `ulimit -n 8192` on macOS.
-- `npm run build && npm run start` - production build + server.
+- `npm run dev` - start the Node API and Angular frontend together.
+- `npm run dev:api` - start only the Node/Express API on port `4000`.
+- `npm run dev:web` - start only the Angular frontend on port `4200`.
+- `npm run build && npm run start` - build Angular + API, then run the API server.
 
 ## Web app usage
 
@@ -86,7 +95,7 @@ If any are missing, the app boots in **Demo mode**:
   - Normalization logic (shared with the CLI token pipeline)
   - Drift comparison + classification + risk
   - Preview UI and filters
-  - API contract for all five routes
+  - API contract for all five Node routes
   - PR body generation (title, summary, diff, risk, checklist)
 - Stubbed (when env vars are missing):
   - Figma Variables API call (falls back to fixture collections + drift overlay)
@@ -96,6 +105,6 @@ If any are missing, the app boots in **Demo mode**:
 
 ## Security
 
-- Figma and GitHub tokens are only read server-side in API routes.
+- Figma and GitHub tokens are only read server-side in the Node API.
 - Frontend never sees credentials.
 - Missing env vars surface a clear demo banner and disable PR creation.

@@ -1,3 +1,5 @@
+import { config as loadDotenv } from "dotenv";
+
 export const ALLOWED_FIGMA_SOURCE_FILE =
   "https://www.figma.com/design/zFN780oP27DS6zOAhdRSU7/Cursor?node-id=1-777&t=JDkt7LLCh9P0uIBS-1";
 
@@ -8,11 +10,22 @@ export interface EnvConfig {
   githubOwner: string | null;
   githubRepo: string | null;
   githubTokenFilePath: string;
-  demoMode: boolean;
+  figmaLive: boolean;
+  githubLive: boolean;
   missing: string[];
 }
 
+let dotenvLoaded = false;
+
+function ensureEnvLoaded() {
+  if (dotenvLoaded) return;
+  loadDotenv({ path: ".env.local", override: true });
+  loadDotenv({ path: ".env", override: false });
+  dotenvLoaded = true;
+}
+
 export function loadEnvConfig(): EnvConfig {
+  ensureEnvLoaded();
   const figmaAccessToken = process.env.FIGMA_ACCESS_TOKEN || null;
   const figmaFileKey = process.env.FIGMA_FILE_KEY || null;
   const githubToken = process.env.GITHUB_TOKEN || null;
@@ -27,8 +40,8 @@ export function loadEnvConfig(): EnvConfig {
   if (!githubOwner) missing.push("GITHUB_OWNER");
   if (!githubRepo) missing.push("GITHUB_REPO");
 
-  const demoMode = missing.length > 0;
-
+  const figmaLive = Boolean(figmaAccessToken && figmaFileKey);
+  const githubLive = Boolean(githubToken && githubOwner && githubRepo);
   return {
     figmaAccessToken,
     figmaFileKey,
@@ -36,7 +49,8 @@ export function loadEnvConfig(): EnvConfig {
     githubOwner,
     githubRepo,
     githubTokenFilePath,
-    demoMode,
+    figmaLive,
+    githubLive,
     missing
   };
 }

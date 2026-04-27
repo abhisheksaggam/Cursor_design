@@ -1,12 +1,11 @@
-import type { ComparePreview, NormalizedTokenDocument, TokenChange } from "@/lib/types";
+import type { ComparePreview, NormalizedTokenDocument, TokenChange } from "../../shared/types";
 
 export function generatePreview(params: {
-  demoMode: boolean;
   githubDoc: NormalizedTokenDocument;
   figmaDoc: NormalizedTokenDocument;
   changes: TokenChange[];
 }): ComparePreview {
-  const { demoMode, githubDoc, figmaDoc, changes } = params;
+  const { githubDoc, figmaDoc, changes } = params;
 
   const totals = {
     total: changes.length,
@@ -18,7 +17,6 @@ export function generatePreview(params: {
   const proposedSource = buildProposedSource(githubDoc, figmaDoc, changes);
 
   return {
-    demoMode,
     figmaSourceFile: figmaDoc.figmaSourceFile,
     totals,
     changes,

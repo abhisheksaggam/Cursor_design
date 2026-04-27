@@ -1,4 +1,4 @@
-import type { NormalizedTokenDocument } from "@/lib/types";
+import type { NormalizedToken, NormalizedTokenDocument, TokenGroup } from "../../shared/types";
 
 export function normalizeGithubTokens(document: NormalizedTokenDocument): NormalizedTokenDocument {
   const groups: NormalizedTokenDocument["tokens"] = {
@@ -10,9 +10,9 @@ export function normalizeGithubTokens(document: NormalizedTokenDocument): Normal
   };
 
   for (const [group, tokens] of Object.entries(document.tokens || {}) as Array<
-    [keyof NormalizedTokenDocument["tokens"], NormalizedTokenDocument["tokens"][keyof NormalizedTokenDocument["tokens"]]]
+    [TokenGroup, Record<string, NormalizedToken>]
   >) {
-    for (const [name, token] of Object.entries(tokens || {})) {
+    for (const [name, token] of Object.entries(tokens || {}) as Array<[string, NormalizedToken]>) {
       groups[group][name] = {
         ...token,
         group,

@@ -1,5 +1,7 @@
 node_modules/
+.angular/
 .next/
+dist/
 out/
 .DS_Store
 .env
