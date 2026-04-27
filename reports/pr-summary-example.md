@@ -9,14 +9,14 @@ GitHub is treated as source of truth (tokens/source/tokens.json). The drift chec
 ## Token diff table
 | Drift Type | Count | Breaking |
 | --- | ---: | :---: |
-| Missing in Figma | 2 | Yes |
-| Extra in Figma | 2 | No |
-| Value changes | 1 | Yes |
-| Mode mismatches | 1 | Yes |
-| Rename candidates | 1 | Yes |
+| Missing in Figma | 0 | Yes |
+| Extra in Figma | 0 | No |
+| Value changes | 0 | Yes |
+| Mode mismatches | 0 | Yes |
+| Rename candidates | 0 | Yes |
 
 ## Risk level
-**High**
+**Low**
 
 ## Approval checklist
 - [ ] Designer confirms intended token changes

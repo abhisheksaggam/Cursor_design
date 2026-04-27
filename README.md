@@ -24,7 +24,7 @@ repo owners can review and open PRs with proposed updates.
 ## Figma Access Rule
 
 - Only this Figma file is allowed as an upstream source:
-  - `https://www.figma.com/design/A7pWibLNKz5oDP6VilzRqC/Untitled?node-id=0-1&t=SR6KT95J5lfN3HMP-1`
+  - `https://www.figma.com/design/zFN780oP27DS6zOAhdRSU7/Cursor?node-id=1-777&t=JDkt7LLCh9P0uIBS-1`
 - Enforcement:
   - Normalization throws if `FIGMA_SOURCE_FILE_URL` is anything else.
   - API routes assert the same policy on every request.

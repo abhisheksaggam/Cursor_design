@@ -9,7 +9,7 @@ The system ingests exactly three Figma variable exports:
 - `Typography.json` - font family, weights, size, line-height, and responsive text-style scales
 
 Exports were taken from this Figma file:
-- `https://www.figma.com/design/A7pWibLNKz5oDP6VilzRqC/Untitled?node-id=0-1&t=SR6KT95J5lfN3HMP-1`
+- `https://www.figma.com/design/zFN780oP27DS6zOAhdRSU7/Cursor?node-id=1-777&t=JDkt7LLCh9P0uIBS-1`
 
 Each file is a variable collection with:
 

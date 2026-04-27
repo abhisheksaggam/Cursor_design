@@ -133,6 +133,11 @@ export async function fetchFigmaVariables(): Promise<FigmaVariablesResponse> {
   const variablesMap = data.meta?.variables || {};
 
   const collections: FigmaVariableCollection[] = Object.values(collectionsMap).map((collection) => {
+    const modes = Array.isArray(collection.modes)
+      ? Object.fromEntries(
+          collection.modes.map((mode: { modeId: string; name: string }) => [mode.modeId, mode.name])
+        )
+      : collection.modes || {};
     const variables = Object.values(variablesMap).filter((v: unknown) => {
       const candidate = v as FigmaVariable & { variableCollectionId?: string };
       return candidate.variableCollectionId === collection.id;
@@ -140,8 +145,14 @@ export async function fetchFigmaVariables(): Promise<FigmaVariablesResponse> {
     return {
       id: collection.id,
       name: collection.name,
-      modes: collection.modes || {},
-      variables: variables as FigmaVariable[]
+      modes,
+      variables: variables.map((variable) => ({
+        ...(variable as FigmaVariable & { resolvedType?: string }),
+        type:
+          (variable as FigmaVariable & { resolvedType?: string }).type ||
+          (variable as FigmaVariable & { resolvedType?: string }).resolvedType ||
+          "STRING"
+      }))
     };
   });
 

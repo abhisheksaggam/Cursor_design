@@ -5,15 +5,15 @@ const source = await loadJson("tokens/source/tokens.json");
 const fixture = JSON.parse(JSON.stringify(source));
 fixture.externalInput = "figma-variables-export-fixture";
 fixture.figmaSourceFile =
-  "https://www.figma.com/design/A7pWibLNKz5oDP6VilzRqC/Untitled?node-id=0-1&t=SR6KT95J5lfN3HMP-1";
+  "https://www.figma.com/design/zFN780oP27DS6zOAhdRSU7/Cursor?node-id=1-777&t=JDkt7LLCh9P0uIBS-1";
 
 const color = fixture.tokens.color;
 const spacing = fixture.tokens.spacing;
 const typography = fixture.tokens.typography;
 
 // 1) value change
-if (color["color.brand.primary.midnight-green.midnight-green-950"]) {
-  color["color.brand.primary.midnight-green.midnight-green-950"].value = {
+if (color["color.background.app"]) {
+  color["color.background.app"].value = {
     r: 0.02,
     g: 0.24,
     b: 0.27,
@@ -22,7 +22,7 @@ if (color["color.brand.primary.midnight-green.midnight-green-950"]) {
 }
 
 // 2) missing token
-delete spacing["spacing.space-12"];
+delete spacing["spacing.12"];
 
 // 3) extra token
 color["color.brand.experimental.neon-lime-500"] = {
@@ -35,17 +35,17 @@ color["color.brand.experimental.neon-lime-500"] = {
 };
 
 // 4) renamed token candidate (same value, different key)
-if (color["color.text.primary-text"]) {
+if (color["color.text.primary"]) {
   color["color.text.main-primary"] = {
-    ...color["color.text.primary-text"],
+    ...color["color.text.primary"],
     figmaVariableId: "figma-renamed:1"
   };
-  delete color["color.text.primary-text"];
+  delete color["color.text.primary"];
 }
 
 // 5) mode mismatch
-if (typography["typography.text-styles.size.heading-1-bold"]) {
-  typography["typography.text-styles.size.heading-1-bold"].modes = {
+if (typography["typography.body.table.line-height"]) {
+  typography["typography.body.table.line-height"].modes = {
     "mobile(base)": 24,
     tablets: 27,
     "laptops/small-desktop": 28

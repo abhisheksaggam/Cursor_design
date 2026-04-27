@@ -44,8 +44,20 @@ function normalizeTypographyName(name: string): string {
   return `typography.${toKebab(cleaned)}`;
 }
 
+function normalizeRadiusName(name: string): string {
+  return `radius.${toKebab(name)}`;
+}
+
+function normalizeShadowName(name: string): string {
+  return `shadow.${toKebab(name)}`;
+}
+
 function deriveGroup(collectionName: string, type: string): TokenGroup | null {
   const name = (collectionName || "").toLowerCase();
+  if (name.includes("shadow") || name.includes("elevation")) return "shadow";
+  if (name.includes("radius") || name.includes("radii") || name.includes("corner")) {
+    return "radius";
+  }
   if (name.includes("typography")) return "typography";
   if (name.includes("spacing")) return "spacing";
   if (name.includes("colour") || name.includes("color")) return "color";
@@ -55,7 +67,9 @@ function deriveGroup(collectionName: string, type: string): TokenGroup | null {
 function canonicalName(name: string, group: TokenGroup): string {
   if (group === "color") return normalizeColorName(name);
   if (group === "spacing") return normalizeSpacingName(name);
-  return normalizeTypographyName(name);
+  if (group === "typography") return normalizeTypographyName(name);
+  if (group === "radius") return normalizeRadiusName(name);
+  return normalizeShadowName(name);
 }
 
 function canonicalValue(variable: {
@@ -128,7 +142,7 @@ export function normalizeFigmaVariables(collections: FigmaVariableCollection[]):
         owner: "design-system",
         deprecated: false,
         replacement: null,
-        figmaVariableId: null,
+        figmaVariableId: variable.id,
         modes,
         type: variable.type
       };
@@ -171,5 +185,7 @@ export function normalizeFigmaVariables(collections: FigmaVariableCollection[]):
 function defaultDescription(group: TokenGroup): string {
   if (group === "spacing") return "Layout spacing token.";
   if (group === "typography") return "Typography scale token.";
+  if (group === "radius") return "Corner radius token.";
+  if (group === "shadow") return "Elevation shadow token.";
   return "Color token.";
 }

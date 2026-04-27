@@ -1,5 +1,5 @@
 export const ALLOWED_FIGMA_SOURCE_FILE =
-  "https://www.figma.com/design/A7pWibLNKz5oDP6VilzRqC/Untitled?node-id=0-1&t=SR6KT95J5lfN3HMP-1";
+  "https://www.figma.com/design/zFN780oP27DS6zOAhdRSU7/Cursor?node-id=1-777&t=JDkt7LLCh9P0uIBS-1";
 
 export interface EnvConfig {
   figmaAccessToken: string | null;
