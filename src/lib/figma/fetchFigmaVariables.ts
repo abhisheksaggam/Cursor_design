@@ -156,16 +156,28 @@ function normalizedDocumentToCollections(document: NormalizedTokenDocument): Fig
 
 export async function fetchFigmaVariables(): Promise<FigmaVariablesResponse> {
   const env = loadEnvConfig();
-
   const bridge = await loadBridgeCollections();
-  if (bridge) {
+  const forceBridge =
+    process.env.FIGMA_USE_BRIDGE === "1" || process.env.FIGMA_USE_BRIDGE === "true";
+
+  // Snapshot file must not override the live API (or Figma edits never show up in compare).
+  // Set FIGMA_USE_BRIDGE=1 to force the snapshot even when tokens are configured.
+  if (forceBridge && bridge) {
     return {
       figmaSourceFile: ALLOWED_FIGMA_SOURCE_FILE,
       collections: bridge
     };
   }
 
-  if (!env.figmaLive || !env.figmaAccessToken || !env.figmaFileKey) {
+  const canUseFigmaApi = Boolean(env.figmaLive && env.figmaAccessToken && env.figmaFileKey);
+
+  if (!canUseFigmaApi) {
+    if (bridge) {
+      return {
+        figmaSourceFile: ALLOWED_FIGMA_SOURCE_FILE,
+        collections: bridge
+      };
+    }
     throw new Error(
       `Figma live mode requires FIGMA_ACCESS_TOKEN and FIGMA_FILE_KEY or active Desktop Bridge data. Missing: ${env.missing.join(", ")}`
     );
