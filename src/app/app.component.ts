@@ -3,7 +3,6 @@ import { ChangeDetectorRef, Component, NgZone, OnInit } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { ButtonModule } from "primeng/button";
 import { CardModule } from "primeng/card";
-import { CheckboxModule } from "primeng/checkbox";
 import { SelectModule } from "primeng/select";
 import { TagModule } from "primeng/tag";
 import { TokenApiService } from "./token-api.service";
@@ -33,7 +32,6 @@ interface Option<T extends string> {
     FormsModule,
     ButtonModule,
     CardModule,
-    CheckboxModule,
     SelectModule,
     TagModule
   ],
@@ -57,17 +55,13 @@ export class AppComponent implements OnInit {
   branches: BranchInfo[] = [];
   branchLoading = false;
   branchError: string | null = null;
+  commitMessage = "chore(tokens): sync design tokens";
   health: HealthStatus | null = null;
   healthError: string | null = null;
   submitting = false;
   prResult: CreateTokenPrResult | null = null;
   prError: string | null = null;
   expandedRows: Record<string, boolean> = {};
-  acknowledgments = {
-    designIntent: false,
-    breakingReviewed: true,
-    policyConfirmed: true
-  };
 
   constructor(
     private readonly api: TokenApiService,
@@ -124,8 +118,15 @@ export class AppComponent implements OnInit {
     return "Proposed token file changes are low risk.";
   }
 
-  get allAcked(): boolean {
-    return Object.values(this.acknowledgments).every(Boolean);
+  get canPushToGit(): boolean {
+    return !!this.preview && !!this.selectedBranch && !!this.commitMessage.trim() && !this.submitting;
+  }
+
+  get pushHelpText(): string {
+    if (!this.preview) return "Run check updates to prepare a token proposal.";
+    if (!this.selectedBranch) return "Select a GitHub branch location before pushing.";
+    if (!this.commitMessage.trim()) return "Add a commit message before pushing.";
+    return "Push creates a Git commit on a token proposal branch and opens a pull request.";
   }
 
   get figmaLive(): boolean {
@@ -190,11 +191,6 @@ export class AppComponent implements OnInit {
           this.zone.run(() => {
             this.preview = preview;
             this.checkedAt = new Date();
-            this.acknowledgments = {
-              designIntent: false,
-              breakingReviewed: preview.totals.breaking === 0,
-              policyConfirmed: true
-            };
             this.loadHealth();
             this.loading = false;
             this.changeDetector.detectChanges();
@@ -245,7 +241,7 @@ export class AppComponent implements OnInit {
         baseBranch: this.selectedBranch,
         preview: this.preview,
         updatedDocument: this.preview.proposedSource,
-        prTitle: "chore(tokens): sync tokens from Figma"
+        commitMessage: this.commitMessage.trim()
       })
       .subscribe({
         next: (result) => {

@@ -40,7 +40,7 @@ export class TokenApiService {
     baseBranch: string;
     preview: ComparePreview;
     updatedDocument: ComparePreview["proposedSource"];
-    prTitle: string;
+    commitMessage: string;
   }) {
     return this.http.post<CreateTokenPrResult>("/api/github/create-pr", input);
   }

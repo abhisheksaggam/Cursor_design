@@ -95,14 +95,14 @@ app.post(
         baseBranch?: string;
         preview?: ComparePreview;
         updatedDocument?: NormalizedTokenDocument;
-        prTitle?: string;
+        commitMessage?: string;
       }
     >,
     response
   ) => {
     try {
       const body = request.body;
-      if (!body?.baseBranch || !body?.updatedDocument || !body?.preview) {
+      if (!body?.baseBranch || !body?.updatedDocument || !body?.preview || !body?.commitMessage?.trim()) {
         response.status(400).json({ error: "Missing required fields." });
         return;
       }
@@ -112,7 +112,7 @@ app.post(
           baseBranch: body.baseBranch,
           preview: body.preview,
           updatedDocument: body.updatedDocument,
-          prTitle: body.prTitle
+          commitMessage: body.commitMessage
         })
       );
     } catch (error) {

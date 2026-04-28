@@ -6,7 +6,7 @@ export interface CreateTokenPrInput {
   baseBranch: string;
   preview: ComparePreview;
   updatedDocument: NormalizedTokenDocument;
-  prTitle?: string;
+  commitMessage: string;
 }
 
 export interface CreateTokenPrResult {
@@ -57,6 +57,7 @@ function buildPrBody(preview: ComparePreview): string {
 export async function createTokenChangePr(input: CreateTokenPrInput): Promise<CreateTokenPrResult> {
   const env = loadEnvConfig();
   const newBranchName = `token-sync/${new Date().toISOString().replace(/[:.]/g, "-")}`;
+  const commitMessage = input.commitMessage.trim();
 
   if (!env.githubToken || !env.githubOwner || !env.githubRepo) {
     throw new Error(
@@ -102,7 +103,7 @@ export async function createTokenChangePr(input: CreateTokenPrInput): Promise<Cr
     owner,
     repo,
     path: basePath,
-    message: "chore(tokens): sync tokens from Figma variables",
+    message: commitMessage,
     content: Buffer.from(updatedContent, "utf8").toString("base64"),
     branch: newBranchName,
     sha: fileSha
@@ -113,7 +114,7 @@ export async function createTokenChangePr(input: CreateTokenPrInput): Promise<Cr
     repo,
     head: newBranchName,
     base: input.baseBranch,
-    title: input.prTitle || "chore(tokens): sync tokens from Figma",
+    title: commitMessage,
     body: buildPrBody(input.preview)
   });
 
