@@ -1,340 +1,101 @@
 import { CommonModule } from "@angular/common";
-import { ChangeDetectorRef, Component, NgZone, OnInit } from "@angular/core";
-import { FormsModule } from "@angular/forms";
-import { ButtonModule } from "primeng/button";
-import { CardModule } from "primeng/card";
-import { SelectModule } from "primeng/select";
-import { TagModule } from "primeng/tag";
-import { TokenApiService } from "./token-api.service";
-import type {
-  BranchInfo,
-  ChangeType,
-  ComparePreview,
-  CreateTokenPrResult,
-  HealthStatus,
-  RiskLevel,
-  TokenChange,
-  TokenGroup,
-  TokenValue
-} from "../shared/types";
+import { Component } from "@angular/core";
 
-type FilterValue = "all" | RiskLevel;
-
-interface Option<T extends string> {
+interface StatCard {
   label: string;
-  value: T;
+  value: string;
+  delta?: string;
+}
+
+interface StatusSegment {
+  label: string;
+  value: number;
+  color: string;
+}
+
+interface MonthlyMetric {
+  month: string;
+  submitted: number;
+  approved: number;
+  declined: number;
+}
+
+interface VehicleFinance {
+  vehicle: string;
+  monthlyPayment: string;
+  balloonPayment: string;
+  totalFinance: string;
+}
+
+interface ProductRank {
+  vehicle: string;
+  volume: number;
 }
 
 @Component({
   selector: "app-root",
-  imports: [
-    CommonModule,
-    FormsModule,
-    ButtonModule,
-    CardModule,
-    SelectModule,
-    TagModule
-  ],
+  imports: [CommonModule],
   templateUrl: "./app.component.html",
   styleUrl: "./app.component.css"
 })
-export class AppComponent implements OnInit {
-  readonly riskOptions: Option<FilterValue>[] = [
-    { label: "All", value: "all" },
-    { label: "Breaking", value: "breaking" },
-    { label: "Review", value: "review-needed" },
-    { label: "Safe", value: "safe" }
+export class AppComponent {
+  readonly stats: StatCard[] = [
+    { label: "Total applications", value: "246", delta: "+18 From last month" },
+    { label: "Finance approved", value: "£ 5.82m", delta: "+11.4% From last month" },
+    { label: "Re-Payment Amount", value: "£ 1.48m", delta: "+8.2% From last month" },
+    { label: "Active in under writer pipeline", value: "38" },
+    { label: "Pending invites", value: "18" },
+    { label: "Approved", value: "12", delta: "+2.1% From last month" }
   ];
 
-  preview: ComparePreview | null = null;
-  checkedAt: Date | null = null;
-  loading = false;
-  error: string | null = null;
-  riskFilter: FilterValue = "all";
-  selectedBranch: string | null = null;
-  branches: BranchInfo[] = [];
-  branchLoading = false;
-  branchError: string | null = null;
-  commitMessage = "chore(tokens): sync design tokens";
-  health: HealthStatus | null = null;
-  healthError: string | null = null;
-  submitting = false;
-  prResult: CreateTokenPrResult | null = null;
-  prError: string | null = null;
-  expandedRows: Record<string, boolean> = {};
+  readonly statuses: StatusSegment[] = [
+    { label: "Invite Sent", value: 12, color: "#fb8a3c" },
+    { label: "Underwriter Pipeline", value: 9, color: "#4c89f7" },
+    { label: "Soft Check Failed", value: 6, color: "#f27022" },
+    { label: "Approved Pipeline", value: 8, color: "#48b96d" },
+    { label: "Referred to Agent", value: 5, color: "#7357c8" },
+    { label: "Declined", value: 4, color: "#c84436" },
+    { label: "Withdrawn", value: 2, color: "#6b7280" },
+    { label: "Completed", value: 1, color: "#22a7a8" }
+  ];
 
-  constructor(
-    private readonly api: TokenApiService,
-    private readonly zone: NgZone,
-    private readonly changeDetector: ChangeDetectorRef
-  ) {}
+  readonly monthlyMetrics: MonthlyMetric[] = [
+    { month: "Jan", submitted: 68, approved: 28, declined: 10 },
+    { month: "Feb", submitted: 60, approved: 26, declined: 14 },
+    { month: "Mar", submitted: 82, approved: 34, declined: 11 },
+    { month: "Apr", submitted: 72, approved: 30, declined: 14 },
+    { month: "May", submitted: 52, approved: 18, declined: 7 },
+    { month: "Jun", submitted: 42, approved: 14, declined: 10 },
+    { month: "Jul", submitted: 68, approved: 26, declined: 11 },
+    { month: "Aug", submitted: 60, approved: 24, declined: 13 },
+    { month: "Sep", submitted: 84, approved: 34, declined: 9 },
+    { month: "Oct", submitted: 52, approved: 17, declined: 8 },
+    { month: "Nov", submitted: 44, approved: 16, declined: 9 },
+    { month: "Dec", submitted: 68, approved: 27, declined: 11 }
+  ];
 
-  ngOnInit() {
-    this.loadHealth();
-    this.loadBranches();
-  }
+  readonly financeRows: VehicleFinance[] = [
+    { vehicle: "Tesla Model Y Long Range (AWD)", monthlyPayment: "£665.00", balloonPayment: "£14,149.59", totalFinance: "£62,029.59" },
+    { vehicle: "Tesla Model 3 Long Range (AWD)", monthlyPayment: "£640.00", balloonPayment: "£13,638.67", totalFinance: "£59,718.67" },
+    { vehicle: "BMW X3 M Sport PHEV", monthlyPayment: "£665.00", balloonPayment: "£13,891.01", totalFinance: "£61,771.01" },
+    { vehicle: "MINI Aceman Electric Classic, Level 1", monthlyPayment: "£335.00", balloonPayment: "£7,052.18", totalFinance: "£31,172.18" },
+    { vehicle: "MINI Cooper Electric Classic, Level 1", monthlyPayment: "£305.00", balloonPayment: "£7,295.09", totalFinance: "£29,255.09" },
+    { vehicle: "MINI Cooper C 5 Door Classic (Petrol)", monthlyPayment: "£280.00", balloonPayment: "£7,107.41", totalFinance: "£27,267.41" },
+    { vehicle: "MINI Cooper C 3 Door Classic (Petrol)", monthlyPayment: "£280.00", balloonPayment: "£7,107.41", totalFinance: "£27,267.41" }
+  ];
 
-  get branchOptions(): Option<string>[] {
-    return this.branches.map((branch) => ({
-      label: `${branch.name}${branch.protected ? " (protected)" : ""}`,
-      value: branch.name
-    }));
-  }
+  readonly productRanks: ProductRank[] = [
+    { vehicle: "Tesla Model Y Long Range (AWD)", volume: 40 },
+    { vehicle: "Tesla Model 3 Long Range (AWD)", volume: 30 },
+    { vehicle: "BMW X3 M Sport PHEV", volume: 22 },
+    { vehicle: "MINI Aceman Electric Classic, Level 1", volume: 20 },
+    { vehicle: "MINI Cooper Electric Classic, Level 1", volume: 15 },
+    { vehicle: "MINI Cooper C 5 Door Classic (Petrol)", volume: 10 },
+    { vehicle: "MINI Cooper C 3 Door Classic (Petrol)", volume: 10 }
+  ];
 
-  get filteredChanges(): TokenChange[] {
-    return (this.preview?.changes || []).filter((change) => {
-      return this.riskFilter === "all" || change.risk === this.riskFilter;
-    });
-  }
-
-  get totals() {
-    return (
-      this.preview?.totals || {
-        total: 0,
-        safe: 0,
-        reviewNeeded: 0,
-        breaking: 0
-      }
-    );
-  }
-
-  get overallRisk(): string {
-    if (this.totals.breaking > 0) return "breaking";
-    if (this.totals.reviewNeeded > 0) return "review";
-    return "safe";
-  }
-
-  get designerImpact(): string {
-    if (!this.preview || this.totals.total === 0) return "No visible design changes were found.";
-    if (this.totals.breaking > 0) return "Breaking token changes need design-system owner review.";
-    if (this.totals.reviewNeeded > 0) return "Some visual values changed and need design intent confirmation.";
-    return "Only safe additive or metadata token changes were found.";
-  }
-
-  get developerImpact(): string {
-    if (!this.preview || this.totals.total === 0) return "No token file changes are required.";
-    if (this.totals.breaking > 0) return "Token updates may affect consuming code and should be reviewed before merge.";
-    if (this.totals.reviewNeeded > 0) return "Token source can be updated after engineering review.";
-    return "Proposed token file changes are low risk.";
-  }
-
-  get canPushToGit(): boolean {
-    return !!this.preview && !!this.selectedBranch && !!this.commitMessage.trim() && !this.submitting;
-  }
-
-  get pushHelpText(): string {
-    if (!this.preview) return "Run check updates to prepare a token proposal.";
-    if (!this.selectedBranch) return "Select a GitHub branch location before pushing.";
-    if (!this.commitMessage.trim()) return "Add a commit message before pushing.";
-    return "Push creates a Git commit on a token proposal branch and opens a pull request.";
-  }
-
-  get figmaLive(): boolean {
-    return this.health?.figmaLive ?? true;
-  }
-
-  get githubLive(): boolean {
-    return this.health?.githubLive ?? true;
-  }
-
-  private toErrorMessage(error: unknown, fallback: string): string {
-    const candidate = error as
-      | { error?: unknown; message?: string }
-      | { error?: { error?: unknown; message?: string }; message?: string }
-      | null
-      | undefined;
-    const nested = candidate && typeof candidate === "object" ? candidate.error : undefined;
-    const direct =
-      typeof candidate?.message === "string"
-        ? candidate.message
-        : typeof candidate?.error === "string"
-          ? candidate.error
-          : undefined;
-    if (direct) return direct;
-    if (nested && typeof nested === "object") {
-      const nestedObj = nested as { error?: unknown; message?: string };
-      if (typeof nestedObj.error === "string") return nestedObj.error;
-      if (typeof nestedObj.message === "string") return nestedObj.message;
-      try {
-        return JSON.stringify(nestedObj);
-      } catch {
-        return fallback;
-      }
-    }
-    if (nested && typeof nested === "string") return nested;
-    try {
-      return JSON.stringify(error) || fallback;
-    } catch {
-      return fallback;
-    }
-  }
-
-  loadHealth() {
-    this.healthError = null;
-    this.api.fetchHealth().subscribe({
-      next: (status) => {
-        this.health = status;
-      },
-      error: (error) => {
-        this.healthError = this.toErrorMessage(error, "Failed to load live status.");
-      }
-    });
-  }
-
-  runCheck() {
-    this.loading = true;
-    this.error = null;
-    this.prResult = null;
-    this.api.compareTokens().subscribe({
-      next: (preview) => {
-        setTimeout(() => {
-          this.zone.run(() => {
-            this.preview = preview;
-            this.checkedAt = new Date();
-            this.loadHealth();
-            this.loading = false;
-            this.changeDetector.detectChanges();
-          });
-        }, 250);
-      },
-      error: (error) => {
-        setTimeout(() => {
-          this.zone.run(() => {
-            this.error = this.toErrorMessage(error, "Failed to compare tokens.");
-            this.loading = false;
-            this.changeDetector.detectChanges();
-          });
-        }, 250);
-      }
-    });
-  }
-
-  loadBranches() {
-    this.branchLoading = true;
-    this.branchError = null;
-    this.api.fetchBranches().subscribe({
-      next: (result) => {
-        setTimeout(() => {
-          this.zone.run(() => {
-            this.branches = result.branches || [];
-            this.branchLoading = false;
-          });
-        }, 0);
-      },
-      error: (error) => {
-        setTimeout(() => {
-          this.zone.run(() => {
-            this.branchError = this.toErrorMessage(error, "Failed to load branches.");
-            this.branchLoading = false;
-          });
-        }, 0);
-      }
-    });
-  }
-
-  createPr() {
-    if (!this.preview || !this.selectedBranch) return;
-    this.submitting = true;
-    this.prError = null;
-    this.api
-      .createPr({
-        baseBranch: this.selectedBranch,
-        preview: this.preview,
-        updatedDocument: this.preview.proposedSource,
-        commitMessage: this.commitMessage.trim()
-      })
-      .subscribe({
-        next: (result) => {
-          this.prResult = result;
-          this.submitting = false;
-        },
-        error: (error) => {
-          this.prError = this.toErrorMessage(error, "Failed to create PR.");
-          this.submitting = false;
-        }
-      });
-  }
-
-  changeKey(change: TokenChange): string {
-    return `${change.token}-${change.type}-${change.affectedMode || ""}`;
-  }
-
-  toggleDetails(change: TokenChange) {
-    const key = this.changeKey(change);
-    this.expandedRows[key] = !this.expandedRows[key];
-  }
-
-  isExpanded(change: TokenChange): boolean {
-    return !!this.expandedRows[this.changeKey(change)];
-  }
-
-  groupLabel(group: TokenGroup): string {
-    return {
-      color: "Color",
-      spacing: "Spacing",
-      typography: "Typography",
-      radius: "Radius",
-      shadow: "Shadow"
-    }[group];
-  }
-
-  riskSeverity(risk: RiskLevel): "success" | "warn" | "danger" {
-    if (risk === "breaking") return "danger";
-    if (risk === "review-needed") return "warn";
-    return "success";
-  }
-
-  riskLabel(risk: RiskLevel): string {
-    return risk === "review-needed" ? "Review" : risk === "breaking" ? "Breaking" : "Safe";
-  }
-
-  changeTypeLabel(changeType: ChangeType): string {
-    const labels: Record<ChangeType, string> = {
-      added: "New",
-      removed: "Removed",
-      "value-change": "Updated",
-      "alias-change": "Link changed",
-      "mode-change": "Responsive values changed",
-      "description-change": "Description updated",
-      "type-change": "Type changed",
-      "rename-candidate": "Renamed",
-      "missing-mode": "Breakpoint missing"
-    };
-    return labels[changeType];
-  }
-
-  prettyTokenName(token: string): string {
-    const parts = token.split(".");
-    return parts.length <= 1 ? token : parts.slice(1).join(" / ").replace(/-/g, " ");
-  }
-
-  formatValue(value: TokenValue, group?: TokenGroup): string {
-    if (value === null || value === undefined) return "-";
-    if (this.isRgba(value)) return this.rgbaToHex(value);
-    if (typeof value === "number") return group === "spacing" || group === "typography" ? `${value}px` : `${value}`;
-    if (typeof value === "string") return value;
-    return JSON.stringify(value);
-  }
-
-  valueStyle(value: TokenValue): Record<string, string> {
-    return this.isRgba(value) ? { backgroundColor: this.rgbaToCss(value) } : {};
-  }
-
-  isRgba(value: unknown): value is { r: number; g: number; b: number; a?: number } {
-    const candidate = value as Record<string, unknown> | null;
-    return !!candidate && typeof candidate.r === "number" && typeof candidate.g === "number" && typeof candidate.b === "number";
-  }
-
-  private rgbaToHex(value: { r: number; g: number; b: number }): string {
-    const channel = (number: number) =>
-      Math.round(Math.max(0, Math.min(1, number)) * 255)
-        .toString(16)
-        .padStart(2, "0");
-    return `#${channel(value.r)}${channel(value.g)}${channel(value.b)}`.toUpperCase();
-  }
-
-  private rgbaToCss(value: { r: number; g: number; b: number; a?: number }): string {
-    const channel = (number: number) => Math.round(Math.max(0, Math.min(1, number)) * 255);
-    return `rgba(${channel(value.r)}, ${channel(value.g)}, ${channel(value.b)}, ${value.a ?? 1})`;
+  statusWidth(value: number): string {
+    const total = this.statuses.reduce((sum, item) => sum + item.value, 0);
+    return `${(value / total) * 100}%`;
   }
 }

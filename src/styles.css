@@ -1,21 +1,38 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Open+Sans:wght@400;600;700&display=swap");
+
 :root {
-  --font-sans: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --surface-page: #f6f6f8;
-  --surface-card: #ffffff;
-  --surface-subtle: #f7f7f8;
-  --surface-muted: #eeeef1;
-  --ink: #111118;
-  --ink-soft: #4a4a55;
-  --ink-muted: #8a8a95;
-  --accent: #4f46e5;
-  --accent-soft: #eef2ff;
-  --success: #16a34a;
-  --success-soft: #ecfdf5;
-  --warning: #b45309;
-  --warning-soft: #fef3c7;
-  --danger: #b91c1c;
-  --danger-soft: #fee2e2;
-  --shadow-card: 0 1px 2px rgba(17, 17, 24, 0.04), 0 4px 12px rgba(17, 17, 24, 0.04);
+  --color-accent-warning-soft: #fca264;
+  --color-action-primary: #0f8bfd;
+  --color-action-success: #22c55e;
+  --color-background-app: #0d1424;
+  --color-background-canvas: #303f54;
+  --color-background-control: #f1f5f9;
+  --color-background-subtle: #fbfcfe;
+  --color-background-surface: #ffffff;
+  --color-background-table-row: #f9f9fa;
+  --color-border-control: #f1f5f9;
+  --color-border-default: #e5ebf0;
+  --color-border-strong: #dfe5ee;
+  --color-border-subtle: #e8edf4;
+  --color-border-table: #44486d;
+  --color-chart-approved: #56b38a;
+  --color-chart-declined: #c83f31;
+  --color-chart-progress: #00c950;
+  --color-chart-submitted: #fb8a3c;
+  --color-status-success: #16a34a;
+  --color-text-inverse: #ffffff;
+  --color-text-month: #334155;
+  --color-text-muted: #64748b;
+  --color-text-primary: #1f2937;
+  --color-text-soft: #6b7380;
+  --radius-button: 6px;
+  --radius-card: 10px;
+  --radius-graph: 12px;
+  --radius-md: 4px;
+  --radius-page-corner: 25px;
+  --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.08);
+  --font-body: "Open Sans", Arial, sans-serif;
+  --font-control: Inter, Arial, sans-serif;
 }
 
 * {
@@ -26,17 +43,15 @@ html,
 body {
   min-height: 100%;
   margin: 0;
-  background: var(--surface-page);
-  color: var(--ink);
-  font-family: var(--font-sans);
-  -webkit-font-smoothing: antialiased;
 }
 
-a {
-  color: var(--accent);
+body {
+  background: var(--color-background-app);
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
 }
 
-.p-card {
-  border: 1px solid var(--surface-muted);
-  box-shadow: var(--shadow-card);
+button,
+select {
+  font: inherit;
 }

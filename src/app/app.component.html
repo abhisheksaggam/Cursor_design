@@ -1,215 +1,133 @@
-<main class="app-shell">
-  <header class="app-header">
-    <div>
-      <div class="eyebrow">Design system workspace</div>
-      <h1>Design token update dashboard</h1>
-    </div>
-    <div class="header-actions">
-      <button class="primary-action" type="button" [disabled]="loading" (click)="runCheck()">
-        {{ loading ? 'Checking...' : 'Check updates' }}
-      </button>
-    </div>
-  </header>
+<main class="dashboard-shell">
+  <section class="dashboard-panel">
+    <header class="dashboard-header">
+      <h1>Dashboard</h1>
+      <select class="month-select" aria-label="Reporting period">
+        <option>Last Month</option>
+      </select>
+    </header>
 
-  <section class="live-status">
-    <p-card styleClass="status-card">
-      <div class="status-header">
-        <div>
-          <div class="card-eyebrow">Connection status</div>
-          <h2>Live sync health</h2>
+    <section class="kpi-grid" aria-label="Finance application summary">
+      <article class="kpi-card" *ngFor="let stat of stats; let index = index" [class.kpi-card-tall]="index > 2">
+        <span class="accent" [class.blue]="index === 0" [class.success]="index === 1" [class.success-dark]="index === 2" [class.amber]="index === 3" [class.green]="index === 5"></span>
+        <p>{{ stat.label }}</p>
+        <div class="kpi-value-row">
+          <strong>{{ stat.value }}</strong>
+          <span *ngIf="stat.delta" class="trend">{{ stat.delta }}</span>
         </div>
-        <p-tag [value]="figmaLive ? 'Figma live' : 'Figma fallback'" [severity]="figmaLive ? 'success' : 'warn'" />
-      </div>
-      <div class="status-grid">
-        <div class="status-item">
-          <span>Figma variables</span>
-          <p-tag [value]="figmaLive ? 'Live API' : 'Fixture mode'" [severity]="figmaLive ? 'success' : 'warn'" />
-        </div>
-        <div class="status-item">
-          <span>GitHub tokens / PR</span>
-          <p-tag [value]="githubLive ? 'Live API' : 'Local fallback'" [severity]="githubLive ? 'success' : 'warn'" />
-        </div>
-      </div>
-      <p *ngIf="healthError" class="small-muted">{{ healthError }}</p>
-    </p-card>
-  </section>
+      </article>
+    </section>
 
-  <section class="metric-grid">
-    <p-card styleClass="metric-card">
-      <div class="card-eyebrow">Overall risk</div>
-      <strong>{{ overallRisk }}</strong>
-    </p-card>
-    <p-card styleClass="metric-card">
-      <div class="card-eyebrow">Safe</div>
-      <strong>{{ totals.safe }}</strong>
-    </p-card>
-    <p-card styleClass="metric-card">
-      <div class="card-eyebrow">Review needed</div>
-      <strong>{{ totals.reviewNeeded }}</strong>
-    </p-card>
-    <p-card styleClass="metric-card">
-      <div class="card-eyebrow">Breaking</div>
-      <strong>{{ totals.breaking }}</strong>
-    </p-card>
-  </section>
-
-  <section class="impact-grid">
-    <p-card styleClass="impact-card">
-      <div class="card-eyebrow">Designer impact</div>
-      <p>{{ designerImpact }}</p>
-    </p-card>
-    <p-card styleClass="impact-card">
-      <div class="card-eyebrow">Developer impact</div>
-      <p>{{ developerImpact }}</p>
-    </p-card>
-  </section>
-
-  <div *ngIf="error" class="message danger">{{ error }}</div>
-  <section class="diff-section">
-    <div class="filters">
-      <div class="segmented">
-        <button
-          *ngFor="let filter of riskOptions"
-          type="button"
-          [class.active]="riskFilter === filter.value"
-          (click)="riskFilter = filter.value"
+    <section class="metric-card status-card" aria-label="Applications by status">
+      <h2>Applications by Status</h2>
+      <div class="status-stack">
+        <span
+          *ngFor="let status of statuses"
+          class="status-segment"
+          [style.width]="statusWidth(status.value)"
+          [style.background]="status.color"
         >
-          {{ filter.label }}
-        </button>
+          {{ status.value }}
+        </span>
       </div>
-      <span class="checked-time">
-        {{ checkedAt ? ('Checked ' + (checkedAt | date: 'dd/MM/yyyy, HH:mm:ss')) : 'Not checked yet' }}
-      </span>
-    </div>
+      <div class="status-legend">
+        <span class="status-pill" *ngFor="let status of statuses">
+          <i class="dot" [style.background]="status.color"></i>
+          {{ status.label }}
+          <strong>{{ status.value }}</strong>
+        </span>
+      </div>
+    </section>
 
-    <p-card styleClass="table-card">
-      <div class="table-card-header">
-        <div>
-          <div class="card-eyebrow">Token diff preview</div>
-          <h2>Figma proposals compared with GitHub tokens</h2>
+    <section class="metric-card chart-card" aria-label="Monthly processed applications">
+      <div class="card-heading">
+        <h2>Monthly Processed</h2>
+        <div class="actions">
+          <div class="toggle-group" aria-label="Chart metric">
+            <button type="button" class="active">Volume</button>
+            <button type="button">Finance</button>
+            <button type="button">Repayment</button>
+          </div>
+          <button class="export-button" type="button">Export</button>
         </div>
-        <span class="count-pill">{{ filteredChanges.length }} changes</span>
       </div>
-    <table class="token-table">
-      <thead>
-        <tr>
-          <th>Token name</th>
-          <th>Type</th>
-          <th>Mode</th>
-          <th>GitHub value</th>
-          <th>Figma value</th>
-          <th>Change type</th>
-          <th>Risk</th>
-          <th>Notes</th>
-        </tr>
-      </thead>
-      <tbody>
-        <ng-container *ngFor="let change of filteredChanges">
-          <tr class="change-row">
-            <td>
-              <button class="token-button" type="button" (click)="toggleDetails(change)">
-                <strong>{{ prettyTokenName(change.token) }}</strong>
-                <span>{{ change.token }}</span>
-              </button>
-            </td>
-            <td>{{ groupLabel(change.group) }}</td>
-            <td>{{ change.affectedMode || '-' }}</td>
-            <td>
-              <span class="value-chip compact">
-                <i *ngIf="isRgba(change.githubValue)" [ngStyle]="valueStyle(change.githubValue)"></i>
-                {{ formatValue(change.githubValue ?? null, change.group) }}
-              </span>
-            </td>
-            <td>
-              <span class="value-chip compact proposed">
-                <i *ngIf="isRgba(change.figmaValue)" [ngStyle]="valueStyle(change.figmaValue)"></i>
-                {{ formatValue(change.figmaValue ?? null, change.group) }}
-              </span>
-            </td>
-            <td>{{ changeTypeLabel(change.type) }}</td>
-            <td><p-tag [value]="riskLabel(change.risk)" [severity]="riskSeverity(change.risk)" /></td>
-            <td>{{ change.note }}</td>
-          </tr>
-          <tr *ngIf="isExpanded(change)" class="detail-row">
-            <td colspan="8">
-              <div class="detail-grid">
-                <div>
-                  <div class="card-eyebrow">Designer context</div>
-                  <p>{{ change.designerExplanation }}</p>
-                </div>
-                <div>
-                  <div class="card-eyebrow">Developer context</div>
-                  <p>{{ change.developerExplanation }}</p>
-                </div>
-              </div>
-            </td>
-          </tr>
-        </ng-container>
-        <tr *ngIf="filteredChanges.length === 0">
-          <td colspan="8" class="empty-table">No token preview yet.</td>
-        </tr>
-      </tbody>
-    </table>
-    </p-card>
+
+      <div class="chart-plot">
+        <div class="month-group" *ngFor="let metric of monthlyMetrics">
+          <div class="bars">
+            <span class="bar submitted" [style.height.%]="metric.submitted"></span>
+            <span class="bar approved" [style.height.%]="metric.approved"></span>
+            <span class="bar decline" [style.height.%]="metric.declined"></span>
+          </div>
+          <span class="month">{{ metric.month }}</span>
+        </div>
+      </div>
+
+      <div class="chart-legend">
+        <span><i class="dot submitted"></i>Submitted</span>
+        <span><i class="dot approved"></i>Approved</span>
+        <span><i class="dot decline"></i>Decline</span>
+      </div>
+    </section>
+
+    <section class="bottom-grid">
+      <article class="metric-card table-card">
+        <div class="card-heading">
+          <h2>Vehicle Finance Breakdown</h2>
+          <button class="export-button" type="button">Export</button>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Vehicle</th>
+              <th>Monthly Repayment</th>
+              <th>Balloon Payment</th>
+              <th>Total Finance</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of financeRows">
+              <td>{{ row.vehicle }}</td>
+              <td>{{ row.monthlyPayment }}</td>
+              <td>{{ row.balloonPayment }}</td>
+              <td>{{ row.totalFinance }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </article>
+
+      <article class="metric-card ranking-card">
+        <div class="card-heading">
+          <h2>Product Ranking (Jan)</h2>
+          <div class="actions">
+            <div class="toggle-group" aria-label="Ranking metric">
+              <button type="button" class="active">Volume</button>
+              <button type="button">Finance</button>
+              <button type="button">Repayment</button>
+            </div>
+            <button class="export-button" type="button">Export</button>
+          </div>
+        </div>
+        <table class="data-table ranking-table">
+          <thead>
+            <tr>
+              <th>Vehicle (Total : 147)</th>
+              <th>Volume</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let rank of productRanks">
+              <td>{{ rank.vehicle }}</td>
+              <td>
+                <span class="volume-value">{{ rank.volume }}</span>
+                <span class="progress-track">
+                  <span class="progress-fill" [style.width.%]="rank.volume * 2.5"></span>
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </article>
+    </section>
   </section>
-
-  <p-card styleClass="approval-card">
-    <ng-template #header>
-      <div class="section-header">
-        <div>
-          <div class="card-eyebrow">Repo owner review</div>
-          <h2>Push token proposal to GitHub</h2>
-        </div>
-      </div>
-    </ng-template>
-
-    <div class="push-form">
-      <div>
-        <label class="field-label" for="target-branch">Location</label>
-        <div *ngIf="branchError" class="message danger">{{ branchError }}</div>
-        <p-select
-          *ngIf="!branchError"
-          inputId="target-branch"
-          [options]="branchOptions"
-          [(ngModel)]="selectedBranch"
-          optionLabel="label"
-          optionValue="value"
-          [loading]="branchLoading"
-          placeholder="Select target branch"
-          styleClass="full-width"
-        />
-        <p class="small-muted">Choose the GitHub branch that the token proposal should target.</p>
-      </div>
-
-      <div>
-        <label class="field-label" for="commit-message">Commit message</label>
-        <textarea
-          id="commit-message"
-          class="commit-message-input"
-          rows="3"
-          [(ngModel)]="commitMessage"
-          placeholder="Example: chore(tokens): sync design tokens"
-        ></textarea>
-        <p class="small-muted">This message is used for the Git commit and pull request title.</p>
-      </div>
-    </div>
-
-    <footer class="approval-footer">
-      <span>{{ pushHelpText }}</span>
-      <p-button
-        [label]="submitting ? 'Pushing...' : 'Push to GitHub'"
-        severity="success"
-        [loading]="submitting"
-        [disabled]="!canPushToGit"
-        (onClick)="createPr()"
-      />
-    </footer>
-
-    <div *ngIf="prError" class="message danger">{{ prError }}</div>
-    <div *ngIf="prResult" class="message success">
-      <strong>PR prepared.</strong>
-      Branch: {{ prResult.newBranch }}
-      <a [href]="prResult.prUrl" target="_blank" rel="noopener noreferrer">Open PR</a>
-    </div>
-  </p-card>
 </main>
