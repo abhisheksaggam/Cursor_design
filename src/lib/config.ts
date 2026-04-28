@@ -6,6 +6,7 @@ export const ALLOWED_FIGMA_SOURCE_FILE =
 export interface EnvConfig {
   figmaAccessToken: string | null;
   figmaFileKey: string | null;
+  figmaFileUrl: string | null;
   githubToken: string | null;
   githubOwner: string | null;
   githubRepo: string | null;
@@ -24,10 +25,17 @@ function ensureEnvLoaded() {
   dotenvLoaded = true;
 }
 
+function extractFigmaFileKey(url: string | null): string | null {
+  if (!url) return null;
+  const match = url.match(/figma\.com\/(?:file|design)\/([^/?#]+)/);
+  return match?.[1] || null;
+}
+
 export function loadEnvConfig(): EnvConfig {
   ensureEnvLoaded();
   const figmaAccessToken = process.env.FIGMA_ACCESS_TOKEN || null;
-  const figmaFileKey = process.env.FIGMA_FILE_KEY || null;
+  const figmaFileUrl = process.env.FIGMA_FILE_URL || ALLOWED_FIGMA_SOURCE_FILE;
+  const figmaFileKey = process.env.FIGMA_FILE_KEY || extractFigmaFileKey(figmaFileUrl);
   const githubToken = process.env.GITHUB_TOKEN || null;
   const githubOwner = process.env.GITHUB_OWNER || null;
   const githubRepo = process.env.GITHUB_REPO || null;
@@ -45,6 +53,7 @@ export function loadEnvConfig(): EnvConfig {
   return {
     figmaAccessToken,
     figmaFileKey,
+    figmaFileUrl,
     githubToken,
     githubOwner,
     githubRepo,

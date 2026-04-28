@@ -193,7 +193,15 @@ export async function fetchFigmaVariables(): Promise<FigmaVariablesResponse> {
     }
   });
   if (!response.ok) {
-    throw new Error(`Figma API error ${response.status}: ${await response.text()}`);
+    const body = await response.text();
+    const needsVariableScope =
+      response.status === 403 && body.includes("file_variables:read");
+    if (needsVariableScope) {
+      throw new Error(
+        "Figma token can open the file, but cannot read variables. Create/update FIGMA_ACCESS_TOKEN with the file_variables:read scope, then update the Vercel env var."
+      );
+    }
+    throw new Error(`Figma API error ${response.status}: ${body}`);
   }
   const data = (await response.json()) as {
     meta?: {
