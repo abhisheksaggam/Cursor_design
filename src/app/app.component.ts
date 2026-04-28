@@ -3,7 +3,6 @@ import { ChangeDetectorRef, Component, NgZone, OnInit } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { ButtonModule } from "primeng/button";
 import { CardModule } from "primeng/card";
-import { CheckboxModule } from "primeng/checkbox";
 import { SelectModule } from "primeng/select";
 import { TagModule } from "primeng/tag";
 import { TokenApiService } from "./token-api.service";
@@ -33,7 +32,6 @@ interface Option<T extends string> {
     FormsModule,
     ButtonModule,
     CardModule,
-    CheckboxModule,
     SelectModule,
     TagModule
   ],
@@ -63,11 +61,7 @@ export class AppComponent implements OnInit {
   prResult: CreateTokenPrResult | null = null;
   prError: string | null = null;
   expandedRows: Record<string, boolean> = {};
-  acknowledgments = {
-    designIntent: false,
-    breakingReviewed: true,
-    policyConfirmed: true
-  };
+  commitMessage = "chore(tokens): sync design tokens";
 
   constructor(
     private readonly api: TokenApiService,
@@ -124,8 +118,39 @@ export class AppComponent implements OnInit {
     return "Proposed token file changes are low risk.";
   }
 
-  get allAcked(): boolean {
-    return Object.values(this.acknowledgments).every(Boolean);
+  get comparedTokenCount(): number {
+    const groups = this.preview?.proposedSource?.tokens;
+    if (!groups) return 0;
+    let n = 0;
+    for (const tokens of Object.values(groups)) {
+      n += Object.keys(tokens || {}).length;
+    }
+    return n;
+  }
+
+  get emptyTableMessage(): string {
+    if (!this.preview) return "No token preview yet.";
+    const totalChanges = this.preview.changes?.length ?? 0;
+    if (totalChanges > 0 && this.riskFilter !== "all") {
+      return "No changes match this filter.";
+    }
+    if (totalChanges === 0 && this.comparedTokenCount > 0) {
+      return `GitHub and Figma are in sync — no token differences. ${this.comparedTokenCount} tokens compared.`;
+    }
+    if (totalChanges === 0 && this.comparedTokenCount === 0) {
+      return "No tokens found to compare.";
+    }
+    return "No token preview yet.";
+  }
+
+  get approvalFooterHint(): string {
+    if (!this.preview) {
+      return "Run check updates to prepare a token proposal.";
+    }
+    if ((this.preview.changes?.length ?? 0) === 0) {
+      return "No token differences — nothing to push.";
+    }
+    return "You can edit the PR body in GitHub after creation.";
   }
 
   get figmaLive(): boolean {
@@ -190,11 +215,6 @@ export class AppComponent implements OnInit {
           this.zone.run(() => {
             this.preview = preview;
             this.checkedAt = new Date();
-            this.acknowledgments = {
-              designIntent: false,
-              breakingReviewed: preview.totals.breaking === 0,
-              policyConfirmed: true
-            };
             this.loadHealth();
             this.loading = false;
             this.changeDetector.detectChanges();
@@ -240,12 +260,13 @@ export class AppComponent implements OnInit {
     if (!this.preview || !this.selectedBranch) return;
     this.submitting = true;
     this.prError = null;
+    const title = this.commitMessage.trim() || "chore(tokens): sync design tokens";
     this.api
       .createPr({
         baseBranch: this.selectedBranch,
         preview: this.preview,
         updatedDocument: this.preview.proposedSource,
-        prTitle: "chore(tokens): sync tokens from Figma"
+        prTitle: title
       })
       .subscribe({
         next: (result) => {

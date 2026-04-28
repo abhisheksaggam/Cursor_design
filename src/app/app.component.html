@@ -146,7 +146,7 @@
           </tr>
         </ng-container>
         <tr *ngIf="filteredChanges.length === 0">
-          <td colspan="8" class="empty-table">No token preview yet.</td>
+          <td colspan="8" class="empty-table">{{ emptyTableMessage }}</td>
         </tr>
       </tbody>
     </table>
@@ -154,19 +154,14 @@
   </section>
 
   <p-card styleClass="approval-card">
-    <ng-template #header>
-      <div class="section-header">
-        <div>
-          <div class="card-eyebrow">Repo owner review</div>
-          <h2>Push approved token proposal to GitHub</h2>
-        </div>
-        <p-button label="Push to GitHub" icon="pi pi-github" severity="secondary" [outlined]="true" />
-      </div>
-    </ng-template>
+    <div class="approval-card-intro">
+      <div class="card-eyebrow">Repo owner review</div>
+      <h2>Push token proposal to GitHub</h2>
+    </div>
 
-    <div class="approval-grid">
+    <div class="approval-fields">
       <div>
-        <label class="field-label">Target branch</label>
+        <label class="field-label">Location</label>
         <div *ngIf="branchError" class="message danger">{{ branchError }}</div>
         <p-select
           *ngIf="!branchError"
@@ -178,37 +173,36 @@
           placeholder="Select target branch"
           styleClass="full-width"
         />
-        <p class="small-muted">Live mode is enabled. PR creation writes directly to GitHub.</p>
+        <p class="small-muted">Choose the GitHub branch that the token proposal should target.</p>
       </div>
 
-      <div class="ack-list">
-        <label class="field-label">Pre-merge acknowledgments</label>
-        <label class="ack">
-          <p-checkbox [(ngModel)]="acknowledgments.designIntent" [binary]="true" />
-          <span><strong>Design intent confirmed</strong> Designer reviewed the preview values.</span>
-        </label>
-        <label class="ack">
-          <p-checkbox
-            [(ngModel)]="acknowledgments.breakingReviewed"
-            [binary]="true"
-            [disabled]="totals.breaking === 0"
-          />
-          <span><strong>{{ totals.breaking === 0 ? 'No breaking changes' : 'Breaking changes reviewed' }}</strong> Owner validated naming and deprecations.</span>
-        </label>
-        <label class="ack">
-          <p-checkbox [(ngModel)]="acknowledgments.policyConfirmed" [binary]="true" />
-          <span><strong>Figma source is approved</strong> This workspace accepts only the approved final design file.</span>
-        </label>
+      <div>
+        <label class="field-label">Commit message</label>
+        <textarea
+          class="commit-textarea"
+          rows="3"
+          [(ngModel)]="commitMessage"
+          [disabled]="!preview"
+          placeholder="chore(tokens): sync design tokens"
+        ></textarea>
+        <p class="small-muted">This message is used for the Git commit and pull request title.</p>
       </div>
     </div>
 
     <footer class="approval-footer">
-      <span>{{ !preview ? 'Run check updates to enable PR action.' : 'You can edit the PR body in GitHub after creation.' }}</span>
+      <span>{{ approvalFooterHint }}</span>
       <p-button
-        [label]="submitting ? 'Opening PR...' : 'Approve and open PR'"
+        [label]="submitting ? 'Pushing...' : 'Push to GitHub'"
+        icon="pi pi-github"
         severity="success"
         [loading]="submitting"
-        [disabled]="!preview || !selectedBranch || !allAcked || submitting"
+        [disabled]="
+          !preview ||
+          !selectedBranch ||
+          !commitMessage.trim() ||
+          submitting ||
+          (preview.changes?.length ?? 0) === 0
+        "
         (onClick)="createPr()"
       />
     </footer>
