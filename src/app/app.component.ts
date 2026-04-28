@@ -4,9 +4,7 @@ import { FormsModule } from "@angular/forms";
 import { ButtonModule } from "primeng/button";
 import { CardModule } from "primeng/card";
 import { CheckboxModule } from "primeng/checkbox";
-import { ProgressSpinnerModule } from "primeng/progressspinner";
 import { SelectModule } from "primeng/select";
-import { TableModule } from "primeng/table";
 import { TagModule } from "primeng/tag";
 import { TokenApiService } from "./token-api.service";
 import type {
@@ -22,7 +20,6 @@ import type {
 } from "../shared/types";
 
 type FilterValue = "all" | RiskLevel;
-type GroupFilter = "all" | TokenGroup;
 
 interface Option<T extends string> {
   label: string;
@@ -37,20 +34,13 @@ interface Option<T extends string> {
     ButtonModule,
     CardModule,
     CheckboxModule,
-    ProgressSpinnerModule,
     SelectModule,
-    TableModule,
     TagModule
   ],
   templateUrl: "./app.component.html",
   styleUrl: "./app.component.css"
 })
 export class AppComponent implements OnInit {
-  readonly figmaEmbedUrl =
-    "https://www.figma.com/embed?embed_host=share&url=https%3A%2F%2Fwww.figma.com%2Fdesign%2FzFN780oP27DS6zOAhdRSU7%2FCursor%3Fnode-id%3D1-777%26t%3DaEK6Uj8Y7zhDCKsH-1";
-  readonly figmaSourceFile =
-    "https://www.figma.com/design/zFN780oP27DS6zOAhdRSU7/Cursor?node-id=1-777&t=JDkt7LLCh9P0uIBS-1";
-  readonly tokenFilePath = "tokens/source/tokens.json";
   readonly riskOptions: Option<FilterValue>[] = [
     { label: "All", value: "all" },
     { label: "Breaking", value: "breaking" },
@@ -63,7 +53,6 @@ export class AppComponent implements OnInit {
   loading = false;
   error: string | null = null;
   riskFilter: FilterValue = "all";
-  groupFilter: GroupFilter = "all";
   selectedBranch: string | null = null;
   branches: BranchInfo[] = [];
   branchLoading = false;
@@ -86,30 +75,9 @@ export class AppComponent implements OnInit {
     private readonly changeDetector: ChangeDetectorRef
   ) {}
 
-  get isFigmaRoute(): boolean {
-    if (typeof window === "undefined") return false;
-    return window.location.pathname.toLowerCase().startsWith("/figma");
-  }
-
-  get isDashboardRoute(): boolean {
-    return !this.isFigmaRoute;
-  }
-
   ngOnInit() {
-    if (typeof window !== "undefined" && window.location.pathname === "/") {
-      window.history.replaceState({}, "", "/dashboard");
-    }
-    if (this.isFigmaRoute) return;
     this.loadHealth();
-  }
-
-  get groupOptions(): Option<GroupFilter>[] {
-    const groups = new Set<TokenGroup>();
-    this.preview?.changes.forEach((change) => groups.add(change.group));
-    return [
-      { label: "All areas", value: "all" },
-      ...Array.from(groups).map((group) => ({ label: this.groupLabel(group), value: group }))
-    ];
+    this.loadBranches();
   }
 
   get branchOptions(): Option<string>[] {
@@ -121,9 +89,7 @@ export class AppComponent implements OnInit {
 
   get filteredChanges(): TokenChange[] {
     return (this.preview?.changes || []).filter((change) => {
-      const riskOk = this.riskFilter === "all" || change.risk === this.riskFilter;
-      const groupOk = this.groupFilter === "all" || change.group === this.groupFilter;
-      return riskOk && groupOk;
+      return this.riskFilter === "all" || change.risk === this.riskFilter;
     });
   }
 
@@ -156,18 +122,6 @@ export class AppComponent implements OnInit {
     if (this.totals.breaking > 0) return "Token updates may affect consuming code and should be reviewed before merge.";
     if (this.totals.reviewNeeded > 0) return "Token source can be updated after engineering review.";
     return "Proposed token file changes are low risk.";
-  }
-
-  get headline(): string {
-    const totals = this.preview?.totals;
-    if (!totals || totals.total === 0) return "No token drift detected. Design and code are aligned.";
-    if (totals.breaking > 0) {
-      return `${totals.breaking} breaking change${totals.breaking === 1 ? "" : "s"} need owner approval before merge.`;
-    }
-    if (totals.reviewNeeded > 0) {
-      return `${totals.reviewNeeded} change${totals.reviewNeeded === 1 ? "" : "s"} should be reviewed before approval.`;
-    }
-    return `${totals.safe} safe update${totals.safe === 1 ? "" : "s"} ready for a quick sanity check.`;
   }
 
   get allAcked(): boolean {

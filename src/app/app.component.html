@@ -1,34 +1,16 @@
 <main class="app-shell">
-  <header class="dashboard-header">
+  <header class="app-header">
     <div>
       <div class="eyebrow">Design system workspace</div>
-      <h1>{{ isFigmaRoute ? 'Figma design view' : 'Design token update dashboard' }}</h1>
+      <h1>Design token update dashboard</h1>
     </div>
     <div class="header-actions">
-      <a class="nav-link" href="/figma">Figma</a>
-      <a class="nav-link" href="/dashboard">Dashboard</a>
-      <button *ngIf="isDashboardRoute" class="primary-action" type="button" (click)="runCheck()">
-        Check updates
+      <button class="primary-action" type="button" [disabled]="loading" (click)="runCheck()">
+        {{ loading ? 'Checking...' : 'Check updates' }}
       </button>
     </div>
   </header>
 
-  <section *ngIf="isFigmaRoute" class="figma-page">
-    <p-card styleClass="figma-card">
-      <div class="figma-header">
-        <div>
-          <div class="card-eyebrow">Source design</div>
-          <h2>Dashboard frame from Figma</h2>
-        </div>
-        <a class="figma-open-link" [href]="figmaSourceFile" target="_blank" rel="noopener noreferrer">
-          Open in Figma
-        </a>
-      </div>
-      <iframe [src]="figmaEmbedUrl" title="Figma dashboard design"></iframe>
-    </p-card>
-  </section>
-
-  <ng-container *ngIf="isDashboardRoute">
   <section class="live-status">
     <p-card styleClass="status-card">
       <div class="status-header">
@@ -192,7 +174,8 @@
           [(ngModel)]="selectedBranch"
           optionLabel="label"
           optionValue="value"
-          placeholder="Load branches first"
+          [loading]="branchLoading"
+          placeholder="Select target branch"
           styleClass="full-width"
         />
         <p class="small-muted">Live mode is enabled. PR creation writes directly to GitHub.</p>
@@ -237,5 +220,4 @@
       <a [href]="prResult.prUrl" target="_blank" rel="noopener noreferrer">Open PR</a>
     </div>
   </p-card>
-  </ng-container>
 </main>

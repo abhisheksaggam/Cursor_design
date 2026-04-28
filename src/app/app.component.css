@@ -7,14 +7,14 @@
   padding: 1.75rem 1.5rem 3rem;
 }
 
-.dashboard-header {
+.app-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 1.5rem;
 }
 
-.dashboard-header h1 {
+.app-header h1 {
   margin: 0.2rem 0 0;
   color: var(--ink);
   font-size: clamp(1.55rem, 2.4vw, 2.15rem);
@@ -43,16 +43,6 @@ p {
   gap: 1rem;
 }
 
-.nav-link {
-  color: var(--ink-soft);
-  font-weight: 700;
-  text-decoration: none;
-}
-
-.nav-link:hover {
-  color: var(--accent);
-}
-
 .primary-action {
   border: 0;
   border-radius: 0.75rem;
@@ -63,34 +53,13 @@ p {
   padding: 0.8rem 1rem;
 }
 
+.primary-action:disabled {
+  cursor: progress;
+  opacity: 0.72;
+}
+
 .primary-action:hover {
   filter: brightness(0.95);
-}
-
-.figma-page iframe {
-  width: 100%;
-  min-height: 82vh;
-  border: 0;
-  border-radius: 0.9rem;
-}
-
-.figma-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.9rem;
-}
-
-.figma-header h2 {
-  margin: 0.25rem 0 0;
-  color: var(--ink);
-  font-size: 1rem;
-}
-
-.figma-open-link {
-  color: var(--accent);
-  font-weight: 700;
-  text-decoration: none;
 }
 
 .live-status {
@@ -149,18 +118,6 @@ p {
   text-transform: lowercase;
 }
 
-.metric-card strong.safe {
-  color: var(--ink);
-}
-
-.metric-card strong.review {
-  color: var(--warning);
-}
-
-.metric-card strong.breaking {
-  color: var(--danger);
-}
-
 .impact-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -211,17 +168,6 @@ p {
 .message.success {
   background: var(--success-soft);
   color: var(--success);
-}
-
-.checking-inline {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.8rem 1rem;
-  border: 1px solid var(--surface-muted);
-  border-radius: 0.8rem;
-  background: var(--surface-card);
-  color: var(--ink-soft);
 }
 
 .diff-section {
@@ -338,13 +284,6 @@ p {
   vertical-align: top;
 }
 
-.value-diff {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.65rem;
-}
-
 .value-chip {
   display: inline-flex;
   align-items: center;
@@ -365,10 +304,6 @@ p {
 
 .value-chip.proposed {
   color: var(--ink);
-}
-
-.arrow {
-  color: var(--ink-muted);
 }
 
 .empty-table {
@@ -449,7 +384,7 @@ p {
     grid-template-columns: 1fr;
   }
 
-  .dashboard-header,
+  .app-header,
   .filters,
   .section-header,
   .approval-footer {
