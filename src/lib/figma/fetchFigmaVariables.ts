@@ -157,23 +157,27 @@ function normalizedDocumentToCollections(document: NormalizedTokenDocument): Fig
 export async function fetchFigmaVariables(): Promise<FigmaVariablesResponse> {
   const env = loadEnvConfig();
   const bridge = await loadBridgeCollections();
-  const forceBridge =
-    process.env.FIGMA_USE_BRIDGE === "1" || process.env.FIGMA_USE_BRIDGE === "true";
 
-  // Snapshot file must not override the live API (or Figma edits never show up in compare).
-  // Set FIGMA_USE_BRIDGE=1 to force the snapshot even when tokens are configured.
-  if (forceBridge && bridge) {
-    return {
-      figmaSourceFile: ALLOWED_FIGMA_SOURCE_FILE,
-      collections: bridge
-    };
-  }
+  const useLiveVariablesApi =
+    process.env.FIGMA_USE_LIVE_VARIABLES_API === "1" ||
+    process.env.FIGMA_USE_LIVE_VARIABLES_API === "true";
 
   const figmaAccessToken = env.figmaAccessToken;
   const figmaFileKey = env.figmaFileKey;
   const canUseFigmaApi = Boolean(env.figmaLive && figmaAccessToken && figmaFileKey);
 
-  if (!canUseFigmaApi) {
+  // Default: Figma Bridge export at fixtures/figma/bridge-collections.json (no file_variables:read on PAT).
+  // Opt in to REST: FIGMA_USE_LIVE_VARIABLES_API=1 plus PAT with file_variables:read.
+  if (useLiveVariablesApi) {
+    if (!canUseFigmaApi) {
+      const figmaMissing = env.missing.filter((m) => m.startsWith("FIGMA"));
+      throw new Error(
+        `FIGMA_USE_LIVE_VARIABLES_API is set but Figma API credentials are incomplete. Missing: ${
+          figmaMissing.length ? figmaMissing.join(", ") : "FIGMA_ACCESS_TOKEN / FIGMA_FILE_KEY"
+        }`
+      );
+    }
+  } else {
     if (bridge) {
       return {
         figmaSourceFile: ALLOWED_FIGMA_SOURCE_FILE,
@@ -181,7 +185,7 @@ export async function fetchFigmaVariables(): Promise<FigmaVariablesResponse> {
       };
     }
     throw new Error(
-      `Figma live mode requires FIGMA_ACCESS_TOKEN and FIGMA_FILE_KEY or active Desktop Bridge data. Missing: ${env.missing.join(", ")}`
+      "Figma variables: add fixtures/figma/bridge-collections.json (export from your Figma Bridge plugin) and deploy, or set FIGMA_USE_LIVE_VARIABLES_API=1 with a PAT that has file_variables:read."
     );
   }
 
