@@ -169,7 +169,9 @@ export async function fetchFigmaVariables(): Promise<FigmaVariablesResponse> {
     };
   }
 
-  const canUseFigmaApi = Boolean(env.figmaLive && env.figmaAccessToken && env.figmaFileKey);
+  const figmaAccessToken = env.figmaAccessToken;
+  const figmaFileKey = env.figmaFileKey;
+  const canUseFigmaApi = Boolean(env.figmaLive && figmaAccessToken && figmaFileKey);
 
   if (!canUseFigmaApi) {
     if (bridge) {
@@ -183,11 +185,11 @@ export async function fetchFigmaVariables(): Promise<FigmaVariablesResponse> {
     );
   }
 
-  const url = `https://api.figma.com/v1/files/${env.figmaFileKey}/variables/local?refresh=${Date.now()}`;
+  const url = `https://api.figma.com/v1/files/${figmaFileKey}/variables/local?refresh=${Date.now()}`;
   const response = await fetch(url, {
     cache: "no-store",
     headers: {
-      "X-Figma-Token": env.figmaAccessToken,
+      "X-Figma-Token": figmaAccessToken as string,
       "Cache-Control": "no-cache, no-store, must-revalidate",
       Pragma: "no-cache"
     }
