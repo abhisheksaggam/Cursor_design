@@ -5,7 +5,7 @@ import type {
   TokenGroup,
   TokenValue
 } from "../../shared/types";
-import { ALLOWED_FIGMA_SOURCE_FILE } from "../config";
+import { ALLOWED_FIGMA_SOURCE_FILE } from "../config.js";
 
 const TYPE_TO_GROUP: Record<string, TokenGroup> = {
   COLOR: "color",

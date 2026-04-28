@@ -1,4 +1,4 @@
-import { loadEnvConfig } from "../config";
+import { loadEnvConfig } from "../config.js";
 import type { NormalizedTokenDocument } from "../../shared/types";
 
 export async function fetchGithubTokens(): Promise<{

@@ -1,5 +1,5 @@
 import { Octokit } from "@octokit/rest";
-import { loadEnvConfig } from "../config";
+import { loadEnvConfig } from "../config.js";
 import type { ComparePreview, NormalizedTokenDocument } from "../../shared/types";
 
 export interface CreateTokenPrInput {

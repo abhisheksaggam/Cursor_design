@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { ALLOWED_FIGMA_SOURCE_FILE, loadEnvConfig } from "../config";
+import { ALLOWED_FIGMA_SOURCE_FILE, loadEnvConfig } from "../config.js";
 import type { NormalizedTokenDocument, TokenGroup, TokenValue } from "../../shared/types";
 
 export interface FigmaVariableCollection {

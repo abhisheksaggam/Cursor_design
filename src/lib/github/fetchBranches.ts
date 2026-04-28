@@ -1,4 +1,4 @@
-import { loadEnvConfig } from "../config";
+import { loadEnvConfig } from "../config.js";
 
 export interface BranchInfo {
   name: string;
