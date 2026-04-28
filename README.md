@@ -1,110 +1,163 @@
-# Design Token Consistency System
+# Cursor_design — Design system workspace
 
- A design-token consistency workflow plus an Angular + PrimeNG web app where designers can
-trigger checks between **Figma Variables** and **GitHub design tokens**, and
-repo owners can review and open PRs with proposed updates.
+This repository hosts **two parallel tracks** on separate Git branches: a production-minded **design-token governance app** on `main`, and a **United Utilities vehicle-finance dashboard prototype** on `United-Utilities`. Both deploy to **Vercel** under different projects so you can preview each line of work without branch checkout.
 
-- GitHub is the **source of truth**.
-- Figma is treated as an **external proposal**.
-- Figma changes never overwrite GitHub without human approval.
+---
 
-## What is inside
+## Intent (why this exists)
 
-- `src/app/` - Angular v21 + PrimeNG frontend
-- `server/` - standalone Node/Express API routes
-- `src/shared/` - shared frontend/backend API contracts
-- `src/lib/figma/` - Figma variables fetch + normalization
-- `src/lib/github/` - GitHub tokens fetch, branches, PR creation
-- `src/lib/tokens/` - compare, classify, generate preview
-- `src/normalize/`, `src/compare/`, `src/reports/`, `src/sync/` - CLI token pipeline (pre-existing)
-- `tokens/input/*.json` - original exports (only allowed Figma source file)
-- `tokens/source/tokens.json` - normalized canonical token set
-- `fixtures/figma/*.json` - demo-mode fixtures (drift-seeded)
-- `reports/*.md` - drift + PR-summary markdown outputs
+| Audience | Purpose |
+| --- | --- |
+| **Design & eng** | Keep **GitHub** as the **source of truth** for design tokens while **Figma** supplies **proposals**. Nothing in Figma should overwrite GitHub without human review and an explicit PR. |
+| **Product** | On `main`: a **dashboard** to compare Figma variables with repo tokens, classify risk (safe / review / breaking), and **open PRs** with structured summaries. |
+| **Stakeholder demo** | On `United-Utilities`: a **static, front-end-only** operations-style **dashboard** (vehicle finance KPIs, status mix, monthly trends) styled with the same token vocabulary, for visual alignment and narrative—**not** the full token-sync workflow. |
 
-## Figma Access Rule
+---
 
-- Only this Figma file is allowed as an upstream source:
-  - `https://www.figma.com/design/zFN780oP27DS6zOAhdRSU7/Cursor?node-id=1-777&t=JDkt7LLCh9P0uIBS-1`
-- Enforcement:
-  - Normalization throws if `FIGMA_SOURCE_FILE_URL` is anything else.
-  - API routes assert the same policy on every request.
-  - CI `check:tokens` fails if source/fixture point to a different URL.
+## Deployments (live)
+
+| Branch | Vercel project (name) | Production URL |
+| --- | --- | --- |
+| `main` | `cursor-design-live` | https://cursor-design-live.vercel.app |
+| `United-Utilities` | `united-utilities-dashboard` | https://united-utilities-dashboard.vercel.app |
+
+**How deploys map to branches**
+
+- **`main` → `cursor-design-live`**  
+  Standard Vercel Git integration: pushes to `main` build and deploy this app.
+
+- **`United-Utilities` → `united-utilities-dashboard`**  
+  This project’s `vercel.json` includes an **`ignoreCommand`** so a build runs **only** when `VERCEL_GIT_COMMIT_REF` is `United-Utilities`. Pushes to `main` **do not** update this preview. If the live site ever looks stale, confirm the latest commit on `United-Utilities` completed a Vercel build.
+
+Both projects use the same layout: **static Angular** (`npm run build:web`) plus **serverless API** at `api/index.ts` (see `vercel.json` routes: `/api/*` → Node function, SPA fallback → `index.html`).
+
+---
+
+## Product state (where things stand)
+
+### `main` — Design Token Consistency System (primary product)
+
+**Stage:** **Feature-complete for the core loop** — compare → preview → branch select → PR — with demo fallbacks when secrets are missing.
+
+**What is implemented:**
+
+- **Angular 21 + PrimeNG** UI: health (Figma/GitHub live vs fallback), risk summary, filtered change preview, branch picker, PR creation with commit message.
+- **Node/Express API** (`server/`, mirrored for Vercel in `api/index.ts`): health, Figma variables, GitHub tokens & branches, token compare + preview, create PR.
+- **Figma ingestion** (`src/lib/figma/`): default path uses **Bridge export** `fixtures/figma/bridge-collections.json` when present; optional **live** Figma Variables API when `FIGMA_ACCESS_TOKEN` + file key exist and **`FIGMA_USE_LIVE_VARIABLES_API=1`** (PAT needs `file_variables:read`).
+- **GitHub** (`src/lib/github/`): fetch canonical token JSON from repo, list branches, create PR with generated body.
+- **Token engine** (`src/lib/tokens/`): normalize, compare, classify risk, generate preview copy.
+- **CLI / policy** (`scripts/`, `src/normalize/`, `src/compare/`, `reports/`): normalize inputs, reports, **`check:tokens`** gate.
+- **CI** (`.github/workflows/token-drift.yml` on `main`): `normalize:tokens` → `report:tokens` → `check:tokens` on push/PR.
+
+**Still implicit / next steps for contributors:**
+
+- Expand automated tests beyond CLI/token gates if you need regression coverage on UI/API.
+- Confirm production env vars on `cursor-design-live` match `.env.example` for full live mode (see below).
+
+---
+
+### `United-Utilities` — Finance dashboard prototype
+
+**Stage:** **UI prototype** — demonstrates layout, hierarchy, and **token-driven styling** for a vehicle-finance narrative using **hard-coded demo data**.
+
+**What differs from `main`:**
+
+- Single **dashboard surface**: KPI cards, application status breakdown, monthly metrics, finance table, product ranks (`src/app/app.component.*` simplified; no PrimeNG token workflow screens).
+- **Styling** refactored (`src/styles.css`, component CSS) to align with **canonical Figma token keys** used as CSS variables (e.g. chart/status colors).
+- **Tooling**: `.editorconfig`, `.prettierrc`, `tsconfig.spec.json`; `vercel.json` **`ignoreCommand`** so only this branch builds the `united-utilities-dashboard` project.
+
+**Not the focus of this branch:** wiring live Figma/GitHub compare flows into the finance UI—that remains on `main`.
+
+---
+
+## Repository map (quick orientation)
+
+| Path | Role |
+| --- | --- |
+| `src/app/` | Angular app shell (workflow UI on `main`, dashboard-only on `United-Utilities`). |
+| `api/index.ts` | Vercel serverless entry; keep in sync with `server/app.ts` behavior for `/api/*`. |
+| `server/` | Local Express API (`npm run dev:api`, port **4000**). |
+| `src/lib/` | Shared config, Figma, GitHub, token logic (both branches share much of this). |
+| `src/shared/types.ts` | API/contracts shared by frontend and backend. |
+| `fixtures/figma/` | Bridge snapshot + drift demos for offline/demo mode. |
+| `tokens/` | Inputs + canonical `tokens/source/tokens.json`; CLI consumes these. |
+| `vercel.json` | Build output `dist/web/browser`, `/api` rewrite, **`ignoreCommand` only on `United-Utilities`**. |
+
+---
 
 ## Environment variables
 
-| Variable | Purpose |
+Copy `.env.example` to `.env.local` (git-ignored). Summary:
+
+| Variable | Role |
 | --- | --- |
-| `FIGMA_ACCESS_TOKEN` | Personal access token for Figma Variables API (enterprise). |
-| `FIGMA_FILE_KEY` | Figma file key for variables fetch. |
-| `GITHUB_TOKEN` | GitHub token with `contents:write` and `pull-requests:write`. |
-| `GITHUB_OWNER` | Target repo owner/org. |
-| `GITHUB_REPO` | Target repo name. |
-| `GITHUB_TOKEN_FILE_PATH` | Path to canonical token JSON in the repo (defaults to `tokens/source/tokens.json`). |
+| `FIGMA_ACCESS_TOKEN` | Figma PAT when using live APIs. |
+| `FIGMA_FILE_KEY` / `FIGMA_FILE_URL` | File scope; key can be derived from URL. |
+| `FIGMA_USE_LIVE_VARIABLES_API` | Set to `1` to use REST variables API instead of default bridge fixture path. |
+| `GITHUB_*` | Repo + token + path to canonical token JSON in repo. |
 
-If any are missing, the app boots in **Demo mode**:
-- Figma data is loaded from `tokens/input/*.json` + `fixtures/figma/demo-drift.json`.
-- GitHub tokens load from `tokens/source/tokens.json`.
-- Branches load from a fixture list.
-- PR creation is disabled and returns a demo response.
+**Policy:** Only one Figma **source file** URL is allowed in code (`ALLOWED_FIGMA_SOURCE_FILE` in `src/lib/config.ts`); mismatches throw. If Figma/GitHub env is incomplete, the app runs in **demo/fixture mode** with a visible health state and PR creation disabled or stubbed.
 
-### Secure local setup
-
-- Keep secrets in `.env.local` (already ignored by git).
-- Use `.env.example` as the safe template.
-- Values from `.env.local` are auto-loaded by the API and shared config module.
+---
 
 ## Commands
 
-- `npm run normalize:tokens` - merge/normalize the three input exports.
-- `npm run report:tokens` - generate drift and PR summary markdown reports.
-- `npm run check:tokens` - fail if breaking drift is detected (CI gate).
-- `npm run create:token-pr-summary` - regenerate PR summary output.
-- `npm run dev` - start the Node API and Angular frontend together.
-- `npm run dev:api` - start only the Node/Express API on port `4000`.
-- `npm run dev:web` - start only the Angular frontend on port `4200`.
-- `npm run build && npm run start` - build Angular + API, then run the API server.
+| Command | Meaning |
+| --- | --- |
+| `npm run dev` | API (4000) + Angular (4200) with `proxy.conf.json` → `/api` to local server. |
+| `npm run dev:api` / `npm run dev:web` | Run one half only. |
+| `npm run build` | `ng build` + `tsc` for server. |
+| `npm run build:web` | Front-end only (what Vercel build uses). |
+| `npm run start` | Run compiled server (`tsx server/index.ts`). |
+| `npm run normalize:tokens` / `report:tokens` / `check:tokens` | CLI token pipeline + CI gate. |
 
-## Web app usage
+---
 
-### As a designer
-1. Open the dashboard (`/`).
-2. Click **Check updates**.
-3. Review the **Change preview** table:
-   - filter by `All`, `Safe`, `Review`, or `Breaking`
-   - click a row to see the designer + developer explanation
-4. Flag intent concerns back to the repo owner if anything looks off.
+## Web app flows (`main`)
 
-### As a repo owner
-1. After a check run, review the preview and totals.
-2. In **Approve and push**:
-   - pick a target branch from the branch selector
-   - a new `token-sync/...` branch will be created from it
-3. Click **Create PR**.
-4. Open the returned PR URL to review title, summary, diff table, risk level,
-   and checklist before merging.
+1. Open `/`, run **Check updates**, read **Live sync health**.
+2. Review **Change preview** with filters (All / Safe / Review / Breaking).
+3. Repo owner: pick base branch → **Create PR** (new `token-sync/...` branch; does not push directly to base).
 
-### Branch selection
-- Branches come from `/api/github/branches` (live GitHub or fixture list).
-- PR is never pushed to the selected branch directly - a new branch is created
-  from it and the PR targets the selected branch as base.
+---
 
-## What is real vs stubbed
+## Security notes
 
-- Real:
-  - Normalization logic (shared with the CLI token pipeline)
-  - Drift comparison + classification + risk
-  - Preview UI and filters
-  - API contract for all five Node routes
-  - PR body generation (title, summary, diff, risk, checklist)
-- Stubbed (when env vars are missing):
-  - Figma Variables API call (falls back to fixture collections + drift overlay)
-  - GitHub tokens file fetch (falls back to local `tokens/source/tokens.json`)
-  - Branch listing (fixture list)
-  - PR creation (returns demo response)
+- Tokens live **only** on the server; the browser never receives Figma/GitHub secrets.
+- Demo mode is obvious from health tags; live PR creation requires full GitHub scope as documented in `.env.example`.
 
-## Security
+---
 
-- Figma and GitHub tokens are only read server-side in the Node API.
-- Frontend never sees credentials.
-- Missing env vars surface a clear demo banner and disable PR creation.
+## For AI agents — resume context (machine-oriented)
+
+Use this block to bootstrap work without re-deriving repo facts.
+
+```yaml
+repo: Cursor_design
+package_name: design-token-consistency-system
+stack: Angular 21, PrimeNG, Express 5, TypeScript, Vercel Node serverless api
+primary_branch: main
+secondary_branch: United-Utilities
+vercel:
+  main_url: https://cursor-design-live.vercel.app
+  main_project: cursor-design-live
+  united_utilities_url: https://united-utilities-dashboard.vercel.app
+  united_utilities_project: united-utilities-dashboard
+  united_utilities_ignore_command: builds only when VERCEL_GIT_COMMIT_REF == United-Utilities
+intent_main: Figma proposals vs GitHub tokens; PR workflow; GitHub source of truth
+intent_united_utilities: Static finance dashboard UI; token-aligned CSS; demo data
+figma_defaults: bridge-collections.json; live API optional with FIGMA_USE_LIVE_VARIABLES_API=1
+policy: single allowed Figma file URL in src/lib/config.ts ALLOWED_FIGMA_SOURCE_FILE
+api_paths: GET /api/health,/api/figma/variables,/api/github/tokens,/api/github/branches; POST /api/tokens/compare,/api/github/create-pr
+local_api_port: 4000
+angular_dev_port: 4200
+ci_main: .github/workflows/token-drift.yml runs normalize, report, check:tokens
+```
+
+When changing API behavior, update **`server/app.ts`** and **`api/index.ts`** together. When changing env contract, update **`.env.example`** and this README if the workflow shifts.
+
+---
+
+## License / visibility
+
+Private project (`package.json`: `"private": true`). `.vercel/` link metadata may exist locally under ignored checkouts; **do not commit** `.vercel/` to the repo (see Vercel README in those folders).
