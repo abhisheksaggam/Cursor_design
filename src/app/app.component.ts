@@ -52,14 +52,14 @@ export class AppComponent {
   ];
 
   readonly statuses: StatusSegment[] = [
-    { label: "Invite Sent", value: 12, color: "var(--color-status-invite)" },
-    { label: "Underwriter Pipeline", value: 9, color: "var(--color-status-pipeline)" },
-    { label: "Soft Check Failed", value: 6, color: "var(--color-status-soft-check)" },
-    { label: "Approved Pipeline", value: 8, color: "var(--color-status-approved)" },
-    { label: "Referred to Agent", value: 5, color: "var(--color-status-referred)" },
-    { label: "Declined", value: 4, color: "var(--color-status-declined)" },
-    { label: "Withdrawn", value: 2, color: "var(--color-status-withdrawn)" },
-    { label: "Completed", value: 1, color: "var(--color-status-completed)" }
+    { label: "Invite Sent", value: 12, color: "var(--token-color-chart-submitted)" },
+    { label: "Underwriter Pipeline", value: 9, color: "var(--token-color-chart-finance)" },
+    { label: "Soft Check Failed", value: 6, color: "var(--token-color-chart-soft-check)" },
+    { label: "Approved Pipeline", value: 8, color: "var(--token-color-chart-approved)" },
+    { label: "Referred to Agent", value: 5, color: "var(--token-color-chart-referred)" },
+    { label: "Declined", value: 4, color: "var(--token-color-chart-declined)" },
+    { label: "Withdrawn", value: 2, color: "var(--token-color-text-muted)" },
+    { label: "Completed", value: 1, color: "var(--token-color-chart-completed)" }
   ];
 
   readonly monthlyMetrics: MonthlyMetric[] = [

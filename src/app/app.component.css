@@ -127,7 +127,7 @@ h2 {
 }
 
 .accent.green {
-  background: var(--color-kpi-accent-approved);
+  background: var(--token-color-chart-completed);
 }
 
 .kpi-card p {
