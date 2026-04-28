@@ -1,5 +1,13 @@
 :host {
   display: block;
+  --dashboard-width: 1377px;
+  --dashboard-shell-padding: var(--space-5);
+  --dashboard-card-padding: var(--space-4);
+  --dashboard-card-gap: var(--space-4);
+  --dashboard-kpi-height: 93px;
+  --dashboard-kpi-height-tall: 99px;
+  --dashboard-chart-height: 343px;
+  --dashboard-table-height: 565px;
 }
 
 .dashboard-shell {
@@ -8,10 +16,10 @@
 }
 
 .dashboard-panel {
-  width: min(1377px, 100vw);
+  width: min(var(--dashboard-width), 100vw);
   min-height: 100vh;
   margin: 0 auto;
-  padding: 20px;
+  padding: var(--dashboard-shell-padding);
   background: var(--color-background-canvas);
   border-top-left-radius: var(--radius-page-corner);
 }
@@ -41,7 +49,7 @@ p {
 
 h1 {
   color: var(--color-text-inverse);
-  font-size: 22px;
+  font-size: var(--font-size-xl);
   font-weight: 600;
   line-height: 30px;
 }
@@ -60,13 +68,17 @@ h2 {
   background: var(--color-background-surface);
   color: var(--color-text-primary);
   font-family: var(--font-control);
-  font-size: 12px;
-  padding: 4px 8px;
+  font-size: var(--font-size-sm);
+  padding: var(--space-1) var(--space-2);
 }
 
 .kpi-grid {
-  gap: 16px;
-  margin-bottom: 20px;
+  gap: var(--dashboard-card-gap);
+  margin-bottom: var(--space-5);
+}
+
+.kpi-grid.secondary {
+  margin-bottom: 18px;
 }
 
 .kpi-card,
@@ -79,14 +91,14 @@ h2 {
 .kpi-card {
   flex: 1 1 0;
   min-width: 0;
-  height: 93px;
+  height: var(--dashboard-kpi-height);
   padding: 14px;
   border-radius: var(--radius-card);
   overflow: hidden;
 }
 
 .kpi-card-tall {
-  height: 99px;
+  height: var(--dashboard-kpi-height-tall);
   padding: 16px 18px;
 }
 
@@ -115,12 +127,12 @@ h2 {
 }
 
 .accent.green {
-  background: #4caf50;
+  background: var(--color-kpi-accent-approved);
 }
 
 .kpi-card p {
   color: var(--color-text-soft);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   line-height: 16px;
 }
 
@@ -175,7 +187,7 @@ h2 {
 
 .status-stack {
   display: flex;
-  height: 22px;
+  height: var(--size-status-stack-height);
   margin-bottom: 18px;
   overflow: hidden;
   border-radius: var(--radius-md);
@@ -225,7 +237,7 @@ h2 {
 }
 
 .chart-card {
-  height: 343px;
+  height: var(--dashboard-chart-height);
   margin-bottom: 22px;
   padding: 16px;
   border-color: var(--color-border-strong);
@@ -244,17 +256,17 @@ h2 {
 
 .toggle-group {
   display: inline-flex;
-  height: 35px;
+  height: var(--size-control-height);
   overflow: hidden;
   border-radius: var(--radius-button);
 }
 
 .toggle-group button,
 .export-button {
-  height: 35px;
+  height: var(--size-control-height);
   border: 1px solid var(--color-border-control);
   font-family: var(--font-control);
-  font-size: 14px;
+  font-size: var(--font-size-md);
   font-weight: 500;
   padding: 6px 12px;
 }
@@ -358,7 +370,7 @@ h2 {
 }
 
 .table-card {
-  min-height: 565px;
+  min-height: var(--dashboard-table-height);
   padding: 16px;
 }
 

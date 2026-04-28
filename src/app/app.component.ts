@@ -39,24 +39,27 @@ interface ProductRank {
   styleUrl: "./app.component.css"
 })
 export class AppComponent {
-  readonly stats: StatCard[] = [
+  readonly primaryStats: StatCard[] = [
     { label: "Total applications", value: "246", delta: "+18 From last month" },
     { label: "Finance approved", value: "£ 5.82m", delta: "+11.4% From last month" },
-    { label: "Re-Payment Amount", value: "£ 1.48m", delta: "+8.2% From last month" },
+    { label: "Re-Payment Amount", value: "£ 1.48m", delta: "+8.2% From last month" }
+  ];
+
+  readonly secondaryStats: StatCard[] = [
     { label: "Active in under writer pipeline", value: "38" },
     { label: "Pending invites", value: "18" },
     { label: "Approved", value: "12", delta: "+2.1% From last month" }
   ];
 
   readonly statuses: StatusSegment[] = [
-    { label: "Invite Sent", value: 12, color: "#fb8a3c" },
-    { label: "Underwriter Pipeline", value: 9, color: "#4c89f7" },
-    { label: "Soft Check Failed", value: 6, color: "#f27022" },
-    { label: "Approved Pipeline", value: 8, color: "#48b96d" },
-    { label: "Referred to Agent", value: 5, color: "#7357c8" },
-    { label: "Declined", value: 4, color: "#c84436" },
-    { label: "Withdrawn", value: 2, color: "#6b7280" },
-    { label: "Completed", value: 1, color: "#22a7a8" }
+    { label: "Invite Sent", value: 12, color: "var(--color-status-invite)" },
+    { label: "Underwriter Pipeline", value: 9, color: "var(--color-status-pipeline)" },
+    { label: "Soft Check Failed", value: 6, color: "var(--color-status-soft-check)" },
+    { label: "Approved Pipeline", value: 8, color: "var(--color-status-approved)" },
+    { label: "Referred to Agent", value: 5, color: "var(--color-status-referred)" },
+    { label: "Declined", value: 4, color: "var(--color-status-declined)" },
+    { label: "Withdrawn", value: 2, color: "var(--color-status-withdrawn)" },
+    { label: "Completed", value: 1, color: "var(--color-status-completed)" }
   ];
 
   readonly monthlyMetrics: MonthlyMetric[] = [

@@ -7,9 +7,20 @@
       </select>
     </header>
 
-    <section class="kpi-grid" aria-label="Finance application summary">
-      <article class="kpi-card" *ngFor="let stat of stats; let index = index" [class.kpi-card-tall]="index > 2">
-        <span class="accent" [class.blue]="index === 0" [class.success]="index === 1" [class.success-dark]="index === 2" [class.amber]="index === 3" [class.green]="index === 5"></span>
+    <section class="kpi-grid" aria-label="Primary finance summary">
+      <article class="kpi-card" *ngFor="let stat of primaryStats; let index = index">
+        <span class="accent" [class.blue]="index === 0" [class.success]="index === 1" [class.success-dark]="index === 2"></span>
+        <p>{{ stat.label }}</p>
+        <div class="kpi-value-row">
+          <strong>{{ stat.value }}</strong>
+          <span *ngIf="stat.delta" class="trend">{{ stat.delta }}</span>
+        </div>
+      </article>
+    </section>
+
+    <section class="kpi-grid secondary" aria-label="Secondary finance summary">
+      <article class="kpi-card kpi-card-tall" *ngFor="let stat of secondaryStats; let index = index">
+        <span class="accent" [class.blue]="index === 0" [class.amber]="index === 1" [class.green]="index === 2"></span>
         <p>{{ stat.label }}</p>
         <div class="kpi-value-row">
           <strong>{{ stat.value }}</strong>

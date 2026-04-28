@@ -1,6 +1,7 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Open+Sans:wght@400;600;700&display=swap");
 
 :root {
+  /* Foundation - semantic colors */
   --color-accent-warning-soft: #fca264;
   --color-action-primary: #0f8bfd;
   --color-action-success: #22c55e;
@@ -19,6 +20,15 @@
   --color-chart-declined: #c83f31;
   --color-chart-progress: #00c950;
   --color-chart-submitted: #fb8a3c;
+  --color-status-invite: #f28a3b;
+  --color-status-pipeline: #3575cc;
+  --color-status-soft-check: #f26e00;
+  --color-status-approved: #55b493;
+  --color-status-referred: #7444d8;
+  --color-status-declined: #ca4332;
+  --color-status-withdrawn: #738295;
+  --color-status-completed: #1ca8aa;
+  --color-kpi-accent-approved: #4caf50;
   --color-status-success: #16a34a;
   --color-text-inverse: #ffffff;
   --color-text-month: #334155;
@@ -30,6 +40,19 @@
   --radius-graph: 12px;
   --radius-md: 4px;
   --radius-page-corner: 25px;
+  --size-control-height: 35px;
+  --size-status-stack-height: 22px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --font-size-xs: 10px;
+  --font-size-sm: 12px;
+  --font-size-md: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 22px;
   --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.08);
   --font-body: "Open Sans", Arial, sans-serif;
   --font-control: Inter, Arial, sans-serif;
